@@ -1,19 +1,23 @@
 "use client";
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/app/components/header';
 import { useCart } from '@/app/context/cartcontext';
-import { useEffect } from "react";
 import Head from 'next/head';
 import CustomDropdown from '@/app/components/customdropdown';
 
 interface Product {
+  id: number; 
   name: string;
-  price: number;
-  quantity: number;
+  rate: number;
+  qty: number;
   image: string;
+  item_id: string;
+  price_per_unit: string;
+  total_price: string;
 }
 
 const CartPage: React.FC = () => {
@@ -24,61 +28,116 @@ const CartPage: React.FC = () => {
     reference: '',
     date: '',
   });
+  const [cartItems, setCartItems] = useState<Product[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { products, removeFromCart, updateProductQuantity } = useCart();
 
-  const selectedProducts = products.filter((product) => product.quantity > 0);
-
-  const totalAmount = selectedProducts
-    .reduce((acc, product) => {
-      const price = parseFloat(product.price.toString());
-      if (isNaN(price)) {
-        console.error(`Invalid price for product ${product.name}: ${product.price}`);
-        return acc;
-      }
-      return acc + price * product.quantity;
-    }, 0)
-    .toFixed(2);
-
-  const handlePaymentSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.date) {
-      setErrorMessage('All payment details are required.');
-      return;
+  const fetchCartItems = async () => {
+    try {
+      const response = await axios.get('http://localhost:3307/api/cart'); 
+      setCartItems(response.data);
+    } catch (error) {
+      console.error('Error fetching cart items:', error);
+      setErrorMessage('Failed to load cart items.');
     }
-
-    setIsPaymentPlaced(true);
-    setCanEditItems(false);
-    setErrorMessage(null);
   };
+  
+  useEffect(() => {
+    fetchCartItems(); // Fetch cart items when the component mounts
+  }, []);
+  
+  const handleUpdateQuantity = async (product: Product, change: number) => {
+    const newQuantity = product.qty + change;
+    if (newQuantity > 0) {
+      try {
+        const response = await axios.put(`http://localhost:3307/api/cart/${product.id}`, {
+          qty: newQuantity,
+        });
+        if (response.status === 200) {
+          setCartItems((prevItems) =>
+            prevItems.map((item) =>
+              item.id === product.id ? { ...item, qty: newQuantity } : item
+            )
+          );
+        }
+      } catch (error) {
+        console.error('Error updating quantity:', error);
+        setErrorMessage('Failed to update item quantity.');
+      }
+    } else {
+      handleRemoveFromCart(product);
+    }
+  };
+
+  const handleRemoveFromCart = async (product: Product) => {
+    try {
+      const response = await axios.delete(`http://localhost:3307/api/cart/${product.id}`); 
+      if (response.status === 200) {
+        setCartItems(cartItems.filter((item) => item.id !== product.id));
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      setErrorMessage('Failed to remove item from cart.');
+    }
+  };
+
+  const handlePaymentSubmit = async (event: React.FormEvent) => {
+  event.preventDefault();
+
+  if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.date) {
+    setErrorMessage('All payment details are required.');
+    return;
+  }
+  
+  
+
+  // Generate a unique sales order number
+  const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
+  const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
+
+  // Prepare data for sales order
+  const salesOrderData = {
+    customer_id: 1,
+    sales_order_number: salesOrderNumber,
+    items: cartItems.map((item) => ({
+      item_id: item.item_id,
+      quantity: item.qty,
+      rate: parseFloat(item.price_per_unit),
+    })),
+    payment_mode: paymentDetails.mode,
+    reference_number: paymentDetails.reference,
+    date: paymentDetails.date,
+  };
+
+  if (salesOrderData.items.length === 0) {
+    setErrorMessage('No items in the cart to place an order.');
+    return;
+  }
+
+  console.log('Sales Order Data:', salesOrderData); 
+
+  try {
+    const response = await axios.post('http://localhost:3307/create-sales-order', salesOrderData);
+    if (response.status === 201) {
+      setIsPaymentPlaced(true);
+      setCanEditItems(false);
+      setErrorMessage(null);
+    } else {
+      setErrorMessage('Failed to place order. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error creating sales order:', error);
+    setErrorMessage('Failed to create sales order. Please try again.');
+  }
+};
+
 
   const handleEditPaymentDetails = () => {
     setIsPaymentPlaced(false);
     setCanEditItems(true);
   };
 
-  const handleUpdateQuantity = (product: Product, change: number) => {
-    const newQuantity = product.quantity + change;
-
-    if (newQuantity > 0) {
-      updateProductQuantity(product.name, newQuantity);
-    } else if (newQuantity === 0) {
-      removeFromCart(product.name);
-    }
-  };
-
-  const handleRemoveFromCart = (product: Product) => {
-    removeFromCart(product.name);
-  };
-
   const paymentOptions = ['NEFT', 'RTGS', 'IMPS'];
-
   const pageTitle = "Orders";
-
-  useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -92,7 +151,7 @@ const CartPage: React.FC = () => {
       </Head>
       <div className="max-w-9xl mx-auto">
         <div className="mb-6">
-          <Header cartItemCount={selectedProducts.length} />
+          <Header cartItemCount={cartItems.length} />
         </div>
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -103,88 +162,91 @@ const CartPage: React.FC = () => {
           >
             <div className="flex gap-2 md:gap-3 sm:mt-4 mt-0">
               <img src="/icons/ordersummary.svg" alt="Order Summary" className="text-black" />
-              <h1 className="text-xl  font-sans font-semibold">View Order Summary</h1>
+              <h1 className="text-xl font-sans font-semibold">View Order Summary</h1>
             </div>
           </motion.div>
 
           <div className="flex flex-col md:flex-row">
-          <div className="md:w-2/3 pr-0 md:pr-8">
-  <div className="bg-white mb-6">
-    <div className="flex justify-between items-center p-4">
-      <h2 className="text-md md:text-xl font-semibold font-sans">All Items</h2>
-    </div>
-    <AnimatePresence>
-      {selectedProducts.length === 0 ? (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.3 }}
-          className="text-center p-6 text-gray-500"
-        >
-          Your product cart is empty
-        </motion.div>
-      ) : (
-        selectedProducts.map((product, index) => (
-          <motion.div
-            key={product.name}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-            className="relative flex flex-col md:flex-row items-start md:items-center p-4 border rounded-lg mb-4 bg-[#FBFEFF]"
-          >
-            <button
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-              onClick={() => handleRemoveFromCart(product)}
-              aria-label="Remove product"
-            >
-              <X size={18} />
-            </button>
-            <div className="flex-shrink-0 w-full md:w-auto">
-              <img src={product.image} alt={product.name} className="object-cover w-48 h-48 md:w-auto" />
-            </div>
-            <div className="flex-grow mt-4 md:mt-0 md:ml-4 flex flex-col md:flex-row justify-between w-full">
-              <div>
-                <h3 className="font-sans">{product.name}</h3>
-              </div>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between md:w-auto mt-4 md:mt-0">
-                <div className="flex items-center justify-between w-full">
-                  <p className="font-semibold font-sans text-right text-lg md:text-base">
-                    ₹ {product.price}
-                  </p>
-                  <div className="flex items-center border rounded-md ml-4">
-                    <button
-                      onClick={() => handleUpdateQuantity(product, -1)}
-                      className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
-                      disabled={!canEditItems}
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <input
-                      type="number"
-                      className="w-12 text-center"
-                      value={product.quantity}
-                      onChange={(e) => handleUpdateQuantity(product, parseInt(e.target.value, 10) - product.quantity)}
-                      disabled={!canEditItems}
-                    />
-                    <button
-                      onClick={() => handleUpdateQuantity(product, 1)}
-                      className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
-                      disabled={!canEditItems}
-                    >
-                      <Plus size={16} />
-                    </button>
-                  </div>
+            <div className="md:w-2/3 pr-0 md:pr-8">
+              <div className="bg-white mb-6">
+                <div className="flex justify-between items-center p-4">
+                  <h2 className="text-md md:text-xl font-semibold font-sans">All Items</h2>
                 </div>
+                <AnimatePresence>
+                  {cartItems.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="text-center p-6 text-gray-500"
+                    >
+                      Your product cart is empty
+                    </motion.div>
+                  ) : (
+                    cartItems.map((product, index) => (
+                      <motion.div
+                        key={product.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -20 }}
+                        transition={{ duration: 0.3, delay: index * 0.1 }}
+                        className="relative flex flex-col md:flex-row items-start md:items-center p-4 border rounded-lg mb-4 bg-[#FBFEFF]"
+                      >
+                        <button
+                          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                          onClick={() => handleRemoveFromCart(product)}
+                          aria-label="Remove product"
+                        >
+                          <X size={18} />
+                        </button>
+                        <div className="flex-shrink-0 w-full md:w-auto">
+                          <img
+                            src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
+                            className="object-cover w-48 h-48 md:w-auto"
+                          />
+                        </div>
+                        <div className="flex-grow mt-4 md:mt-0 md:ml-4 flex flex-col md:flex-row justify-between w-full">
+                          <div>
+                            <h3 className="font-sans">{product.name}</h3>
+                          </div>
+                          <div className="flex flex-col md:flex-row md:items-center md:justify-between md:w-auto mt-4 md:mt-0">
+                            <div className="flex items-center justify-between w-full">
+                              <p className="font-semibold font-sans text-right text-lg md:text-base">
+                                ₹ {product.price_per_unit}
+                              </p>
+                              <div className="flex items-center border rounded-md ml-4">
+                                <button
+                                  onClick={() => handleUpdateQuantity(product, -1)}
+                                  className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
+                                  disabled={!canEditItems}
+                                >
+                                  <Minus size={16} />
+                                </button>
+                                <input
+                                  type="number"
+                                  className="w-12 text-center"
+                                  value={product.qty}
+                                  onChange={(e) => handleUpdateQuantity(product, parseInt(e.target.value, 10) - product.qty)}
+                                  disabled={!canEditItems}
+                                />
+                                <button
+                                  onClick={() => handleUpdateQuantity(product, 1)}
+                                  className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
+                                  disabled={!canEditItems}
+                                >
+                                  <Plus size={16} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  )}
+                </AnimatePresence>
               </div>
             </div>
-          </motion.div>
-        ))
-      )}
-    </AnimatePresence>
-  </div>
-</div>
 
             <div className="md:w-1/3 mt-6 md:mt-0">
               <motion.div
@@ -199,7 +261,9 @@ const CartPage: React.FC = () => {
                 </div>
                 <div className="flex justify-between items-center text-blue-600 font-semibold font-sans">
                   <span>Item Subtotal:</span>
-                  <span className="text-xl md:text-2xl">₹ {totalAmount}</span>
+                  <span className="text-xl md:text-2xl">
+                    ₹ {cartItems.reduce((total, item) => total + parseFloat(item.price_per_unit) * item.qty, 0).toFixed(2)}
+                  </span>
                 </div>
               </motion.div>
               <AnimatePresence mode="wait">

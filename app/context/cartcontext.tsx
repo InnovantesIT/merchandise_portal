@@ -1,7 +1,10 @@
 "use client";
 import React, { createContext, useContext, useState } from 'react';
+import axios from 'axios';
 
 interface Product {
+  item_id: string;
+  rate: number;
   name: string;
   price: number;
   image: string;
@@ -12,8 +15,8 @@ interface Product {
 interface CartContextProps {
   products: Product[];
   addToCart: (product: Product) => void;
-  removeFromCart: (productName: string) => void;
-  updateProductQuantity: (productName: string, quantity: number) => void;
+  removeFromCart: (itemId: string) => void;
+  updateProductQuantity: (itemId: string, quantity: number) => void;
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
@@ -29,39 +32,73 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
 
-  const addToCart = (newProduct: Product) => {
-    setProducts((prevProducts) => {
-      const productExists = prevProducts.find(
-        (product) => product.name === newProduct.name
-      );
+  const addToCart = async (newProduct: Product) => {
+    try {
+      const response = await axios.post('http://localhost:3307/api/cart', { 
+        item_id: newProduct.item_id,
+        quantity: 1 
+      });
+      
+      if (response.status === 200) {
+        setProducts((prevProducts) => {
+          const productExists = prevProducts.find(
+            (product) => product.item_id === newProduct.item_id
+          );
 
-      if (productExists) {
-        return prevProducts.map((product) =>
-          product.name === newProduct.name
-            ? { ...product, quantity: product.quantity + 1 }
-            : product
-        );
-      } else {
-        return [...prevProducts, { ...newProduct, quantity: 1 }];
+          if (productExists) {
+            return prevProducts.map((product) =>
+              product.item_id === newProduct.item_id
+                ? { ...product, quantity: product.quantity + 1 }
+                : product
+            );
+          } else {
+            return [...prevProducts, { ...newProduct, quantity: 1 }];
+          }
+        });
       }
-    });
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
-  const removeFromCart = (productName: string) => {
-    setProducts((prevProducts) => {
-      const updatedProducts = prevProducts.filter(product => product.name !== productName);
-      console.log('Removed Product:', productName);
-      console.log('Updated Products:', updatedProducts);
-      return updatedProducts;
-    });
+  const removeFromCart = async (itemId: string) => {
+    try {
+      const response = await axios.delete(`http://localhost:3307/api/cart/${itemId}`);
+      
+      if (response.status === 200) {
+        setProducts((prevProducts) => {
+          const updatedProducts = prevProducts.filter(product => product.item_id !== itemId);
+          console.log('Removed Product ID:', itemId);
+          console.log('Updated Products:', updatedProducts);
+          return updatedProducts;
+        });
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+    }
   };
 
-  const updateProductQuantity = (productName: string, quantity: number) => {
-    setProducts((prevProducts) =>
-      prevProducts.map(product =>
-        product.name === productName ? { ...product, quantity } : product
-      )
-    );
+  const updateProductQuantity = async (itemId: string, quantity: number) => {
+    if (quantity < 1) {
+      removeFromCart(itemId);
+      return;
+    }
+
+    try {
+      const response = await axios.put(`http://localhost:3307/api/cart/${itemId}`, { 
+        quantity 
+      });
+      
+      if (response.status === 200) {
+        setProducts((prevProducts) =>
+          prevProducts.map(product =>
+            product.item_id === itemId ? { ...product, quantity } : product
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error updating product quantity:', error);
+    }
   };
 
   return (

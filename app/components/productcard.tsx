@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface Product {
   name: string;
-  price: string;
-  image: string;
+  rate: string;
+  item_id: string;
   quantity: number;
 }
 
@@ -44,12 +44,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, onRemoveFromCa
       transition={{ duration: 0.5 }}
     >
       <motion.img
-        src={product.image}
-        alt={product.name}
-        className="h-52 mx-auto"
-        whileHover={{ scale: 1.05 }}
-        transition={{ duration: 0.2 }}
-      />
+  src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
+  alt={product.name}
+  className="h-52 mx-auto"
+  whileHover={{ scale: 1.05 }}
+  transition={{ duration: 0.2 }}
+/>
+
       <div className="text-center">
         <motion.h2
           className="text-lg font-sans mt-2"
@@ -65,7 +66,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, onRemoveFromCa
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
         >
-          ₹{product.price}
+          ₹{product.rate}
         </motion.p>
       </div>
       <div className="flex justify-center items-center mt-3 font-sans">

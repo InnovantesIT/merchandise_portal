@@ -15,6 +15,8 @@ export default function Login() {
   const [rightBgColor, setRightBgColor] = useState('#F6F8FD');
   const [errors, setErrors] = useState({ username: '', password: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isValid, setIsValid] = useState(false); 
+  const [hasSubmitted, setHasSubmitted] = useState(false); // New state for tracking form submission
 
   const router = useRouter();
 
@@ -34,35 +36,47 @@ export default function Login() {
     fetchBackgroundColors();
   }, []);
 
+  useEffect(() => {
+    validate();
+  }, [username, password]);
+
   const validate = () => {
-    let isValid = true;
+    let valid = true;
     const newErrors = { username: '', password: '' };
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(username)) {
       newErrors.username = 'Please enter a valid email address';
-      isValid = false;
+      valid = false;
     }
 
     if (password.trim() === '') {
       newErrors.password = 'Please enter a password';
-      isValid = false;
+      valid = false;
     }
 
     setErrors(newErrors);
-    return isValid;
+    setIsValid(valid);
   };
 
-  const handleSubmit = (event:any) => {
+  const handleSubmit = async (event:any) => {
     event.preventDefault();
+    setHasSubmitted(true); // Set the flag to true when submitting
 
-    if (validate()) {
-      const dummyUsername = "oem@example.com";
-      const dummyPassword = "password123";
+    if (isValid) {
+      try {
+        const response = await axios.post('http://localhost:3307/api/login', {
+          username,
+          password,
+        });
 
-      if (username === dummyUsername && password === dummyPassword) {
-        router.push('/products');
-      } else {
+        if (response.status === 200) {
+          const { token } = response.data;
+          localStorage.setItem('token', token);
+          // router.push('/products');
+        }
+      } catch (error) {
+        console.error('Login failed:', error);
         setErrors({
           username: 'Invalid username or password',
           password: 'Invalid username or password',
@@ -144,10 +158,10 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
-                className={`w-full px-4 py-2 border ${errors.username ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+                className={`w-full px-4 py-2 border ${errors.username && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
                 placeholder="Enter Login ID"
               />
-              {errors.username && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+              {errors.username && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
             </div>
             <div className="mb-6">
               <label htmlFor="password" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Password</label>
@@ -159,10 +173,10 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 autoComplete="current-password"
-                className={`w-full px-4 py-2 border ${errors.password ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
+                className={`w-full px-4 py-2 border ${errors.password && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
                 placeholder="Enter Password"
               />
-              {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+              {errors.password && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
             <div className="text-sm text-left mb-6">
               <motion.button
@@ -179,7 +193,8 @@ export default function Login() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit" 
-              className="w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200"
+              disabled={!isValid}
+              className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${!isValid ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Confirm 
               <ArrowRight color="#ffffff" strokeWidth={1.25} />

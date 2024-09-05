@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import axios from "axios";
 import { useCart } from "@/app/context/cartcontext";
 import ProductCard from "@/app/components/productcard";
 import Head from "next/head";
@@ -12,40 +13,83 @@ import { RiFilterLine, RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
 
 interface Product {
   name: string;
-  price: number;
-  image: string;
+  rate: number;
+  image_name: string;
   quantity: number;
   category?: string;
+  customer_id:string;
+  item_id: string; // Added item_id to match API requirements
 }
-
-const initialProducts: Product[] = [
-  { name: "Feedback Standees", price: 100, image: "/img/Feedback Standees- 100.png", quantity: 0, category: "Standees" },
-  { name: "Pitstop Standees", price: 200, image: "/img/Pitstop Standees- 200.png", quantity: 0, category: "Standees" },
-  { name: "Wifi Pop", price: 50, image: "/img/Wifi Pop- 50.png", quantity: 0, category: "POP Materials" },
-  { name: "Next Service Due Sticker", price: 20, image: "/img/Next Service Due Sticker- 20.png", quantity: 0, category: "Stickers" },
-  { name: "Mobile Charging Station", price: 2000, image: "/img/Mobile Charging Station- 2000.png", quantity: 0, category: "Equipment" },
-  { name: "Customer Information", price: 30, image: "/img/Customer Information- 30.png", quantity: 0, category: "POP Materials" },
-  { name: "QR Code POSM Kit", price: 250, image: "/img/QR Code POSM Kit- 250.png", quantity: 0, category: "POSM" },
-];
 
 const ProductsPage: React.FC = () => {
   const { addToCart, removeFromCart } = useCart();
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [filter, setFilter] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const handleAddToCart = (product: Product) => {
-    const updatedProduct = { ...product, quantity: product.quantity + 1 };
-    updateProductList(updatedProduct);
-    addToCart(updatedProduct);
-    showToast(`${product.name} added to cart!`, "success");
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await axios.get('http://localhost:3307/api/zoho/items'); 
+        setProducts(response.data.items); 
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        showToast('Failed to load products. Please try again later.', 'error');
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  const handleAddToCart = async (product: Product) => {
+    try {
+      console.log('Product to add:', {
+        customer_id: "1", // Replace with actual customer ID as needed
+        item_id: product.item_id,
+        qty: 1,
+        price_per_unit: product.rate,
+        name:product.name
+
+      });
+  
+      const response = await axios.post('http://localhost:3307/api/cart', {
+        customer_id: "1", // Replace with actual customer ID
+        item_id: product.item_id,
+        qty: 1,
+        price_per_unit: product.rate,
+        name:product.name
+      });
+  
+      console.log(response);
+  
+      // Add to cart using the context's addToCart function
+      addToCart({
+        item_id: product.item_id,
+        rate: product.rate,
+        name: product.name,
+        price: product.rate,
+        image: product.image_name,
+        quantity: 1,
+        category: product.category,
+      });
+  
+      // Show success toast
+      showToast(`${product.name} added to cart.`, "success");
+    } catch (error) {
+      // Log the error for debugging
+      console.error('Error adding to cart:', error.response ? error.response.data : error.message);
+      showToast('Failed to add item to cart.', 'error');
+    }
   };
+  
 
   const handleRemoveFromCart = (product: Product) => {
-    const updatedProduct = { ...product, quantity: Math.max(product.quantity - 1, 0) };
-    updateProductList(updatedProduct);
-    removeFromCart(updatedProduct);
-    showToast(`${product.name} removed from cart.`, "error");
+    if (product.quantity > 0) {
+      const updatedProduct = { ...product, quantity: Math.max(product.quantity - 1, 0) };
+      updateProductList(updatedProduct);
+      removeFromCart(updatedProduct);
+      showToast(`${product.name} removed from cart.`, "error");
+    }
   };
 
   const updateProductList = (updatedProduct: Product) => {
@@ -55,10 +99,9 @@ const ProductsPage: React.FC = () => {
   };
 
   const showToast = (message: string, type: "success" | "error") => {
-    var position =
-      window.innerWidth <= 768 ? "top-right" : "bottom-right"; // "top-right" for mobile, "bottom-right" for desktop
+    const position = window.innerWidth <= 768 ? "top-right" : "bottom-right";
     const options = {
-      position: position,
+      position,
       autoClose: 3000,
       hideProgressBar: false,
       closeOnClick: true,
@@ -66,14 +109,13 @@ const ProductsPage: React.FC = () => {
       draggable: true,
       progress: undefined,
     };
-  
+
     if (type === "success") {
       toast.success(message, options);
     } else {
       toast.error(message, options);
     }
   };
-  
 
   const handleFilterChange = (category: string | null) => {
     setFilter(category === "All" ? null : category);
