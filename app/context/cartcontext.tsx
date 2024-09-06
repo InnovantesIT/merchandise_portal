@@ -1,5 +1,6 @@
+// CartProvider.tsx
 "use client";
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
 interface Product {
@@ -10,6 +11,7 @@ interface Product {
   image: string;
   quantity: number;
   category?: string;
+  group_name?: string;
 }
 
 interface CartContextProps {
@@ -17,6 +19,7 @@ interface CartContextProps {
   addToCart: (product: Product) => void;
   removeFromCart: (itemId: string) => void;
   updateProductQuantity: (itemId: string, quantity: number) => void;
+  cartItemCount: number; // Add this line
 }
 
 const CartContext = createContext<CartContextProps | undefined>(undefined);
@@ -31,6 +34,9 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
+
+  // Calculate the total cart item count
+  const cartItemCount = products.reduce((count, product) => count + product.quantity, 0);
 
   const addToCart = async (newProduct: Product) => {
     try {
@@ -66,12 +72,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await axios.delete(`http://localhost:3307/api/cart/${itemId}`);
       
       if (response.status === 200) {
-        setProducts((prevProducts) => {
-          const updatedProducts = prevProducts.filter(product => product.item_id !== itemId);
-          console.log('Removed Product ID:', itemId);
-          console.log('Updated Products:', updatedProducts);
-          return updatedProducts;
-        });
+        setProducts((prevProducts) => prevProducts.filter(product => product.item_id !== itemId));
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
@@ -85,9 +86,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await axios.put(`http://localhost:3307/api/cart/${itemId}`, { 
-        quantity 
-      });
+      const response = await axios.put(`http://localhost:3307/api/cart/${itemId}`, { quantity });
       
       if (response.status === 200) {
         setProducts((prevProducts) =>
@@ -102,7 +101,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <CartContext.Provider value={{ products, addToCart, removeFromCart, updateProductQuantity }}>
+    <CartContext.Provider value={{ products, addToCart, removeFromCart, updateProductQuantity, cartItemCount }}>
       {children}
     </CartContext.Provider>
   );

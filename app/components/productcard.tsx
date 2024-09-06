@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { FaShoppingCart } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation'; // Import useRouter from Next.js
 
 interface Product {
   name: string;
-  rate: string;
+  rate: number;
   item_id: string;
   quantity: number;
 }
@@ -12,12 +13,12 @@ interface Product {
 interface CardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
-  onRemoveFromCart: (product: Product) => void;
 }
 
-const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, onRemoveFromCart }) => {
+const ProductCard: React.FC<CardProps> = ({ product, onAddToCart }) => {
   const [quantity, setQuantity] = useState(product.quantity);
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
+  const router = useRouter(); // Initialize router
 
   useEffect(() => {
     setQuantity(product.quantity);
@@ -26,30 +27,28 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, onRemoveFromCa
 
   const handleCartClick = () => {
     if (isAddedToCart) {
-      setQuantity(0);
-      setIsAddedToCart(false);
-      onRemoveFromCart(product);
+      router.push('/cart'); // Navigate to the cart page when "Go to Cart" is clicked
     } else {
       setQuantity(1);
       setIsAddedToCart(true);
-      onAddToCart({ ...product, quantity: 1 });
+      onAddToCart({ ...product, quantity: 1 }); // Call the prop function for adding to cart
     }
   };
 
   return (
     <motion.div
-      className="card  bg-white  border-[1.5px] border-gray-100 pb-3 pt-3 mb-3 hover:scale-105 font-sans font-normal"
+      className="card bg-white border-[1.5px] border-gray-100 pb-3 pt-3 mb-3 hover:scale-105 font-sans font-normal"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
       <motion.img
-  src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
-  alt={product.name}
-  className="h-52 mx-auto"
-  whileHover={{ scale: 1.05 }}
-  transition={{ duration: 0.2 }}
-/>
+        src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
+        alt={product.name}
+        className="h-52 mx-auto"
+        whileHover={{ scale: 1.05 }}
+        transition={{ duration: 0.2 }}
+      />
 
       <div className="text-center">
         <motion.h2
@@ -86,13 +85,11 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, onRemoveFromCa
             {isAddedToCart ? (
               <>
                 <FaShoppingCart className="mr-2" />
-                <span className='font-sans text-sm'>Remove from Cart</span>
+                <span className="font-sans text-sm">Go to Cart</span>
               </>
             ) : (
               <>
-              < span className="text-sm font-sans">
-              Add to Cart
-              </span>
+                <span className="text-sm font-sans">Add to Cart</span>
               </>
             )}
           </motion.button>

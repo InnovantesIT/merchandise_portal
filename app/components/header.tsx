@@ -11,6 +11,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   const [activeLink, setActiveLink] = useState('');
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const jwt = require('jsonwebtoken');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false); // State for dropdown
   const router = useRouter();
 
@@ -48,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     <>
       <header className="bg-black text-white sm:p-0 p-4 flex flex-col sm:flex-row items-center sm:items-start shadow-md">
         <div className="flex justify-center sm:justify-start sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
-          <Link href="/products">
+          <Link href="products">
             <img
               src="img/image 15.webp"
               alt="Logo"
@@ -58,15 +59,15 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
         </div>
         <div className="flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-4 mt-0 sm:mr-6 mr-0">
           <div className="flex flex-row space-x-6 sm:mr-7 mr-3">
-            <Link href="/products">
+            <Link href="products">
               <span
                 onClick={handleNavigation}
                 className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
-                  activeLink === '/products' ? 'text-white' : 'text-gray-400'
+                  activeLink === 'products' ? 'text-white' : 'text-gray-400'
                 }`}
               >
                 Home
-                {activeLink === '/products' && (
+                {activeLink === 'products' && (
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-white rounded transition-all duration-300 ease-in-out"></div>
                 )}
               </span>

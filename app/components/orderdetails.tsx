@@ -3,7 +3,7 @@ import React from 'react';
 import { useCart } from '@/app/context/cartcontext';
 
 const OrderDetails: React.FC = () => {
-  const { cartItems } = useCart();
+  const { cartItems }:any = useCart();
 
   const calculateTotal = () => {
     console.log('Cart Items:', cartItems); // Debugging line

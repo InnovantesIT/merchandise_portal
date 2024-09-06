@@ -13,11 +13,12 @@ interface Product {
   id: number; 
   name: string;
   rate: number;
-  qty: number;
+  qty: number; 
   image: string;
   item_id: string;
   price_per_unit: string;
   total_price: string;
+  customer_id:string;
 }
 
 const CartPage: React.FC = () => {
@@ -37,7 +38,6 @@ const CartPage: React.FC = () => {
       setCartItems(response.data);
     } catch (error) {
       console.error('Error fetching cart items:', error);
-      setErrorMessage('Failed to load cart items.');
     }
   };
   
@@ -70,7 +70,9 @@ const CartPage: React.FC = () => {
 
   const handleRemoveFromCart = async (product: Product) => {
     try {
-      const response = await axios.delete(`http://localhost:3307/api/cart/${product.id}`); 
+      console.log(product.id)
+      const response = await axios.delete(`http://localhost:3307/api/cart`,{data:
+        {id:product.id,customer_id:product.customer_id}}); 
       if (response.status === 200) {
         setCartItems(cartItems.filter((item) => item.id !== product.id));
       }
@@ -81,56 +83,93 @@ const CartPage: React.FC = () => {
   };
 
   const handlePaymentSubmit = async (event: React.FormEvent) => {
-  event.preventDefault();
-
-  if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.date) {
-    setErrorMessage('All payment details are required.');
-    return;
-  }
+    event.preventDefault();
   
-  
-
-  // Generate a unique sales order number
-  const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
-  const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
-
-  // Prepare data for sales order
-  const salesOrderData = {
-    customer_id: 1,
-    sales_order_number: salesOrderNumber,
-    items: cartItems.map((item) => ({
-      item_id: item.item_id,
-      quantity: item.qty,
-      rate: parseFloat(item.price_per_unit),
-    })),
-    payment_mode: paymentDetails.mode,
-    reference_number: paymentDetails.reference,
-    date: paymentDetails.date,
-  };
-
-  if (salesOrderData.items.length === 0) {
-    setErrorMessage('No items in the cart to place an order.');
-    return;
-  }
-
-  console.log('Sales Order Data:', salesOrderData); 
-
-  try {
-    const response = await axios.post('http://localhost:3307/create-sales-order', salesOrderData);
-    if (response.status === 201) {
-      setIsPaymentPlaced(true);
-      setCanEditItems(false);
-      setErrorMessage(null);
-    } else {
-      setErrorMessage('Failed to place order. Please try again.');
+    // Validate payment details
+    if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.date) {
+      setErrorMessage('All payment details are required.');
+      return;
     }
-  } catch (error) {
-    console.error('Error creating sales order:', error);
-    setErrorMessage('Failed to create sales order. Please try again.');
-  }
-};
-
-
+  
+    // Generate sales order number with timestamp
+    const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
+    const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
+  
+    // Construct sales order data
+    const salesOrderData = {
+      customer_id: "1977850000000031002",
+      salesorder_number: salesOrderNumber,
+      line_items: cartItems.map((item) => ({
+        item_id: item.item_id,
+        name: item.name,
+        quantity: item.qty,
+        rate: parseFloat(item.price_per_unit),
+      })),
+      reference_number: paymentDetails.reference,
+      date: paymentDetails.date,
+    };
+  
+    // Ensure there are items to order
+    if (salesOrderData.line_items.length === 0) {
+      setErrorMessage('No items in the cart to place an order.');
+      return;
+    }
+  
+    try {
+      // Attempt to create a sales order
+      console.log(salesOrderData)
+      const response = await axios.post('http://localhost:3307/create-sales-order', salesOrderData);
+  
+      console.log(response)
+      if (response.status === 200 || response.status === 201) {
+        setIsPaymentPlaced(true);
+        setCanEditItems(false);
+        setErrorMessage(null);
+  
+        // Attempt to remove items from the cart after successful order
+        try {
+          await Promise.all(
+            cartItems.map(async (item) => {
+              try {
+                await DeleteFromCart(item);
+              } catch (deleteError) {
+                console.error(`Error removing item ${item.id} from cart:`, deleteError);
+                throw new Error(`Failed to remove item ${item.name} from cart.`);
+              }
+            })
+          );
+          setCartItems([]); // Clear cart after all items are removed
+        } catch (deleteAllError) {
+          console.error('Error clearing cart items:', deleteAllError);
+          setErrorMessage('Order placed but some items could not be removed from the cart. Please try again.');
+        }
+      } else {
+        setErrorMessage('Failed to place order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating sales order:', error);
+      setErrorMessage('Failed to create sales order. Please try again.');
+    }
+  };
+  
+  
+  const DeleteFromCart = async (product: Product) => {
+    try {
+      const response = await axios.delete(`http://localhost:3307/api/cart`, {data:
+        {customer_id:product.customer_id}});
+  
+      if (response.status === 200) {
+        setCartItems((prevItems) =>
+          prevItems.filter((item) => item.id !== product.id) // Corrected condition here
+        );
+      }
+    } catch (error) {
+      console.error('Error removing from cart:', error);
+      setErrorMessage('Failed to remove item from cart.');
+    }
+  };
+  
+  
   const handleEditPaymentDetails = () => {
     setIsPaymentPlaced(false);
     setCanEditItems(true);

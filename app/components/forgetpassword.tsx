@@ -3,7 +3,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ForgetPasswordModal = ({ isOpen, onClose }) => {
+const ForgetPasswordModal = ({ isOpen, onClose }:any) => {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
 

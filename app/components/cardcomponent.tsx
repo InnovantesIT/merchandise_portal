@@ -3,11 +3,11 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { CheckCircle } from 'lucide-react';
 
-function CartComponent({ item }) {
+function CartComponent( item :any) {
     const [cart, setCart] = useState([]);
 
     const addItemToCart = () => {
-        setCart(prev => [...prev, item]);
+        // setCart(prev => [...prev, item]);
 
         toast.success(<div style={{ display: 'flex', alignItems: 'center' }}>
             <CheckCircle color="green" size={24} strokeWidth={1.5} style={{ marginRight: 8 }} />

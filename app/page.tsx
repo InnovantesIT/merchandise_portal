@@ -8,6 +8,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import ForgetPasswordModal from '@/app/components/forgetpassword';
 import { motion } from 'framer-motion';
 
+
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -73,7 +74,7 @@ export default function Login() {
         if (response.status === 200) {
           const { token } = response.data;
           localStorage.setItem('token', token);
-          // router.push('/products');
+          // router.push('products');
         }
       } catch (error) {
         console.error('Login failed:', error);
