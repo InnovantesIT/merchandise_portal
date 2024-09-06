@@ -31,10 +31,11 @@ const CartPage: React.FC = () => {
   });
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
 
   const fetchCartItems = async () => {
     try {
-      const response = await axios.get('http://localhost:3307/api/cart'); 
+      const response = await axios.get(baseURL+'/api/cart'); 
       setCartItems(response.data);
     } catch (error) {
       console.error('Error fetching cart items:', error);
@@ -49,7 +50,7 @@ const CartPage: React.FC = () => {
     const newQuantity = product.qty + change;
     if (newQuantity > 0) {
       try {
-        const response = await axios.put(`http://localhost:3307/api/cart/${product.id}`, {
+        const response = await axios.put(baseURL+`/api/cart/${product.id}`, {
           qty: newQuantity,
         });
         if (response.status === 200) {
@@ -71,7 +72,7 @@ const CartPage: React.FC = () => {
   const handleRemoveFromCart = async (product: Product) => {
     try {
       console.log(product.id)
-      const response = await axios.delete(`http://localhost:3307/api/cart`,{data:
+      const response = await axios.delete(baseURL+`/api/cart`,{data:
         {id:product.id,customer_id:product.customer_id}}); 
       if (response.status === 200) {
         setCartItems(cartItems.filter((item) => item.id !== product.id));
@@ -118,7 +119,7 @@ const CartPage: React.FC = () => {
     try {
       // Attempt to create a sales order
       console.log(salesOrderData)
-      const response = await axios.post('http://localhost:3307/create-sales-order', salesOrderData);
+      const response = await axios.post(baseURL+'/create-sales-order', salesOrderData);
   
       console.log(response)
       if (response.status === 200 || response.status === 201) {
@@ -155,7 +156,7 @@ const CartPage: React.FC = () => {
   
   const DeleteFromCart = async (product: Product) => {
     try {
-      const response = await axios.delete(`http://localhost:3307/api/cart`, {data:
+      const response = await axios.delete(baseURL+`/api/cart`, {data:
         {customer_id:product.customer_id}});
   
       if (response.status === 200) {

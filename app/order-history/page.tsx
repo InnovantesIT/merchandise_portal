@@ -10,10 +10,11 @@ const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
 
   const fetchOrderStatus = async () => {
     try {
-      const response = await axios.get("http://localhost:3307/get-sales-order"); // Replace with your API endpoint
+      const response = await axios.get(baseURL+"/get-sales-order"); // Replace with your API endpoint
       
       console.log(response);
       setOrders(response.data.details.salesorders); // Assume the API returns an array of orders

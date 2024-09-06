@@ -28,11 +28,12 @@ const Products =() => {
   const [filter, setFilter] = useState<string | null>(null);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [height,setHeight] = useState(0)
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get("http://localhost:3307/api/zoho/items");
+        const response = await axios.get(baseURL+"/api/zoho/items");
         // Mapping group_name from API response to each product
         const productsWithGroup = response.data.items.map((item: any) => ({
           ...item,
@@ -58,7 +59,7 @@ const Products =() => {
         name: product.name,
       });
 
-      const response = await axios.post("http://localhost:3307/api/cart", {
+      const response = await axios.post(baseURL+"/api/cart", {
         customer_id: "1977850000000020000",
         item_id: product.item_id,
         qty: 1,

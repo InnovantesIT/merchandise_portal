@@ -18,7 +18,7 @@ export default function Login() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isValid, setIsValid] = useState(false); 
   const [hasSubmitted, setHasSubmitted] = useState(false); // New state for tracking form submission
-
+const baseURL = process.env.NEXT_PUBLIC_BASE_URL
   const router = useRouter();
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function Login() {
 
     if (isValid) {
       try {
-        const response = await axios.post('http://localhost:3307/api/login', {
+        const response = await axios.post(baseURL+'/api/login', {
           username,
           password,
         });

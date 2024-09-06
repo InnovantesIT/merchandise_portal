@@ -34,13 +34,14 @@ export const useCart = () => {
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
 
   // Calculate the total cart item count
   const cartItemCount = products.reduce((count, product) => count + product.quantity, 0);
 
   const addToCart = async (newProduct: Product) => {
     try {
-      const response = await axios.post('http://localhost:3307/api/cart', { 
+      const response = await axios.post(baseURL+'/api/cart', { 
         item_id: newProduct.item_id,
         quantity: 1 
       });
@@ -69,7 +70,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const removeFromCart = async (itemId: string) => {
     try {
-      const response = await axios.delete(`http://localhost:3307/api/cart/${itemId}`);
+      const response = await axios.delete(baseURL+`/api/cart/${itemId}`);
       
       if (response.status === 200) {
         setProducts((prevProducts) => prevProducts.filter(product => product.item_id !== itemId));
@@ -86,7 +87,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
 
     try {
-      const response = await axios.put(`http://localhost:3307/api/cart/${itemId}`, { quantity });
+      const response = await axios.put(baseURL+`/api/cart/${itemId}`, { quantity });
       
       if (response.status === 200) {
         setProducts((prevProducts) =>
