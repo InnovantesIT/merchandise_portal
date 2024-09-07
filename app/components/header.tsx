@@ -81,7 +81,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               >
                 Previous Orders
                 {activeLink === '/order-history' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white rounded transition-all duration-300 ease-in-out hover:text-white"></div>
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out hover:text-[#EFDF00]"></div>
                 )}
               </span>
             </Link>
@@ -100,7 +100,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
 )}
 
     {activeLink === '/cart' && (
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white rounded transition-all duration-300 ease-in-out"></div>
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
     )}
   </span>
 </Link>
@@ -118,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
-      className={`absolute right-0 mt-3 ${showLogoutAlert ? 'w-64 h-28 ' : 'w-44 h-auto'} rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none`}
+      className={`absolute right-0 mt-3 ${showLogoutAlert ? 'w-64 h-28 ' : 'w-44 h-auto'} rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-[1000]`}
     >
       {!showLogoutAlert ? (
         <div className="py-1">

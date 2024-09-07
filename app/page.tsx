@@ -74,7 +74,7 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL
         if (response.status === 200) {
           const { token } = response.data;
           localStorage.setItem('token', token);
-          // router.push('products');
+          router.push('products');
         }
       } catch (error) {
         console.error('Login failed:', error);

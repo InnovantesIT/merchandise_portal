@@ -19,22 +19,39 @@ interface Product {
   category?: string;
   customer_id: number;
   item_id: string;
-  group_name?: string; // Added group_name
+  group_name?: string;
 }
 
-const Products =() => {
+const Products = () => {
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
-  const [filter, setFilter] = useState<string | null>(null);
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [height,setHeight] = useState(0)
-  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
+  const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
+  const [isFilterOpen, setIsFilterOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+
+  useEffect(() => {
+    // Function to determine if the screen is mobile
+    const handleResize = () => {
+      const isCurrentlyMobile = window.innerWidth <= 768;
+      setIsMobile(isCurrentlyMobile);
+      // Close filter initially if on mobile
+      if (isCurrentlyMobile) {
+        setIsFilterOpen(false);
+      }
+    };
+    // Add event listener on component mount
+    handleResize(); // Check on initial load
+    window.addEventListener("resize", handleResize);
+
+    // Clean up event listener on component unmount
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await axios.get(baseURL+"/api/zoho/items");
-        // Mapping group_name from API response to each product
+        const response = await axios.get(baseURL + "/api/zoho/items");
         const productsWithGroup = response.data.items.map((item: any) => ({
           ...item,
           group_name: item.group_name,
@@ -47,19 +64,11 @@ const Products =() => {
     };
 
     fetchProducts();
-  }, []);
+  }, [baseURL]);
 
   const handleAddToCart = async (product: Product) => {
     try {
-      console.log("Product to add:", {
-        customer_id: product.customer_id,
-        item_id: product.item_id,
-        qty: 1,
-        price_per_unit: product.rate,
-        name: product.name,
-      });
-
-      const response = await axios.post(baseURL+"/api/cart", {
+      await axios.post(baseURL + "/api/cart", {
         customer_id: "1977850000000020000",
         item_id: product.item_id,
         qty: 1,
@@ -67,9 +76,6 @@ const Products =() => {
         name: product.name,
       });
 
-      console.log(response);
-
-      // Add to cart using the context's addToCart function
       addToCart({
         item_id: product.item_id,
         rate: product.rate,
@@ -80,32 +86,18 @@ const Products =() => {
         category: product.category,
       });
 
-      // Show success toast
       showToast(`${product.name} added to cart.`, "success");
     } catch (error: any) {
-      // Log the error for debugging
-      console.error("Error adding to cart:", error.response ? error.response.data : error.message);
+      console.error(
+        "Error adding to cart:",
+        error.response ? error.response.data : error.message
+      );
       showToast("Failed to add item to cart.", "error");
     }
   };
 
-  const handleRemoveFromCart = (product: Product) => {
-    if (product.quantity > 0) {
-      const updatedProduct = { ...product, quantity: Math.max(product.quantity - 1, 0) };
-      updateProductList(updatedProduct);
-      showToast(`${product.name} removed from cart.`, "error");
-    }
-  };
-
-  const updateProductList = (updatedProduct: Product) => {
-    setProducts((prevProducts) =>
-      prevProducts.map((p) => (p.item_id === updatedProduct.item_id ? updatedProduct : p))
-    );
-  };
-  
-
   const showToast = (message: string, type: "success" | "error") => {
-    const position: ToastPosition =  "top-right"; // Explicitly casting to ToastPosition
+    const position: ToastPosition = "top-right";
     const options = {
       position,
       autoClose: 3000,
@@ -115,102 +107,166 @@ const Products =() => {
       draggable: true,
       progress: undefined,
     };
-  
+
     if (type === "success") {
       toast.success(message, options);
     } else {
       toast.error(message, options);
     }
   };
-  const handleFilterChange = (groupName: string | null) => {
-    setFilter(groupName === "All" ? null : groupName);
+
+  const handleFilterChange = (groupName: string) => {
+    setSelectedFilters((prevFilters) => {
+      const newFilters = new Set(prevFilters);
+      if (groupName === "All") {
+        newFilters.clear();
+      } else {
+        if (newFilters.has(groupName)) {
+          newFilters.delete(groupName);
+        } else {
+          newFilters.add(groupName);
+        }
+      }
+      return newFilters;
+    });
   };
-  
-  // Get unique group names from products for dynamic filter options
+
   const uniqueGroupNames = Array.from(
     new Set(products.map((product) => product.group_name ?? "").filter(Boolean))
   );
-  
+
   const filteredProducts = products
-    .filter((product) => !filter || (product.group_name ?? "") === filter)
+    .filter(
+      (product) =>
+        selectedFilters.size === 0 ||
+        selectedFilters.has(product.group_name ?? "")
+    )
     .sort((a, b) => (a.group_name ?? "").localeCompare(b.group_name ?? ""));
-  
-  const cartItemCount = products.reduce((acc, product) => acc + product.quantity, 0);
-  
-  const pageTitle = filter ? `Products - ${filter}` : "Browse Our Products";
-  
+
+  const cartItemCount = products.reduce(
+    (acc, product) => acc + product.quantity,
+    0
+  );
+
+  const pageTitle = selectedFilters.size
+    ? `Products - ${Array.from(selectedFilters).join(", ")}`
+    : "Browse Our Products";
+
   useEffect(() => {
-     setHeight(window.innerHeight);
     document.title = pageTitle;
   }, [pageTitle]);
-  
-  
 
   return (
     <div className="min-h-screen bg-white">
       <Head>
         <meta
           name="description"
-          content={`Browse and order products from ${filter ? filter : "various categories"}.`}
+          content={`Browse and order products from ${
+            selectedFilters.size ? Array.from(selectedFilters).join(", ") : "various categories"
+          }.`}
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="max-w-9xl mx-auto">
         <Header cartItemCount={cartItemCount} />
         <ToastContainer />
-        <div className="px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="max-w-screen relative my-8 px-4 sm:px-8"
+        >
+          <motion.img
+            src={isMobile ? "/img/MobBanner.jpg" : "/img/Banner.jpg"}
+            alt="Welcome Banner"
+            className="w-full object-cover"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className="text-black mt-9 text-xl font-sans font-semibold flex items-center gap-3"
-          >
-            <img src="/icons/hi.svg" className="w-6 h-6" alt="Hi Icon" />
-            Hi Kailash! Order now!
-          </motion.div>
-          <div className="flex flex-col md:flex-row mt-8 gap-8">
-            <div className="md:w-1/4">
+          />
+
+          <div
+            className="absolute inset-0 bg-gradient-to-r from-[#4C4D3ACC] to-[#313131CC] mx-4 sm:mx-8"
+            style={{ clipPath: 'inset(0 0 0 0)', zIndex: 1 }}
+          ></div>
+
+          <div className="absolute inset-0 flex items-center ml-10 sm:ml-20 z-10">
+          <motion.div
+  initial={{ opacity: 0, y: -20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="text-white text-lg font-thin font-sans  sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
+>
+  Hi Dealer. Welcome to Renault.
+  <br className="sm:hidden" />
+  Order merchandise now!
+</motion.div>
+
+          </div>
+        </motion.div>
+
+        <div className="px-4 sm:px-10">
+          <div className="flex flex-col md:flex-row mt-4 sm:gap-6 gap-4">
+            <div className="md:w-1/6 w-full md:h-full flex-shrink-0 mb-4 md:mb-0">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
-                className="bg-white p-6 rounded-lg"
+                className="bg-[#F4F6F7CC] p-4 sm:p-6 shadow-md h-auto md:h-screen flex flex-col justify-between"
               >
-                <div
-                  className="flex items-center justify-between cursor-pointer md:cursor-default"
+                <motion.div
+                  className="flex items-center justify-between cursor-pointer md:cursor-auto"
                   onClick={() => setIsFilterOpen(!isFilterOpen)}
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  transition={{ duration: 0.3 }}
                 >
                   <div className="flex items-center gap-1">
-                    <RiFilterLine className="w-5 h-6 mb-1" />
-                    <span className="text-xl font-semibold text-pretty font-sans">Filter</span>
+                    <span className="text-lg text-pretty font-sans sm:mb-8 tracking-wider">FILTERS</span>
                   </div>
-                  <div className="md:hidden">
+                  <div className="sm:hidden md:hidden">
                     {isFilterOpen ? <RiArrowUpSLine /> : <RiArrowDownSLine />}
                   </div>
-                </div>
+                </motion.div>
                 <AnimatePresence>
-                  {(isFilterOpen || height >= 768) && (
+                  {isFilterOpen && (
                     <motion.div
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.3 }}
-                      className="space-y-2 font-sans mt-4"
+                      className="space-y-4 font-sans mt-4 md:mt-0 flex-grow overflow-y-auto"
                     >
-                      {["All", ...uniqueGroupNames].map((groupName) => (
+                      <motion.label
+                        key="All"
+                        className="flex items-center space-x-3 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          name="group_name"
+                          value="All"
+                          checked={selectedFilters.size === 0}
+                          onChange={() => handleFilterChange("All")}
+                          className="form-checkbox w-5 h-5 accent-[#EFDF00]"
+                        />
+                        <span className="text-gray-700 capitalize">All</span>
+                      </motion.label>
+                      {uniqueGroupNames.map((groupName) => (
                         <motion.label
                           key={groupName}
-                          className="flex items-center space-x-2 cursor-pointer"
+                          className="flex items-center space-x-3 cursor-pointer"
+                          initial={{ x: -10, opacity: 0 }}
+                          animate={{ x: 0, opacity: 1 }}
+                          exit={{ x: -10, opacity: 0 }}
+                          transition={{ duration: 0.2, delay: 0.1 }}
                         >
                           <input
-                            type="radio"
+                            type="checkbox"
                             name="group_name"
                             value={groupName}
-                            checked={filter === (groupName === "All" ? null : groupName)}
-                            onChange={() =>
-                              handleFilterChange(groupName === "All" ? null : groupName)
-                            }
-                            className="form-radio text-indigo-600"
+                            checked={selectedFilters.has(groupName)}
+                            onChange={() => handleFilterChange(groupName)}
+                            className="form-checkbox w-5 h-5 accent-[#EFDF00]"
                           />
                           <span className="text-gray-700 capitalize">{groupName}</span>
                         </motion.label>
@@ -220,21 +276,22 @@ const Products =() => {
                 </AnimatePresence>
               </motion.div>
             </div>
-
-            <div className="md:w-3/4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredProducts.map((product, index) => (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  <ProductCard
-                    product={product}
-                    onAddToCart={() => handleAddToCart(product)}
-                  />
-                </motion.div>
-              ))}
+            <div className="md:w-5/6 w-full">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {filteredProducts.map((product, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                  >
+                    <ProductCard
+                      product={product}
+                      onAddToCart={() => handleAddToCart(product)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
