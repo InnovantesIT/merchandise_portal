@@ -17,7 +17,7 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Load user data from localStorage or any other storage if needed
-    const storedUser = localStorage.getItem('user');
+    const storedUser = localStorage.getItem('users');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }

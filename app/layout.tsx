@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
        
 
         <link rel="icon" href="/favicon.ico" />
-        <title>Merchandise Store</title>
+        <title>e-store</title>
         <meta name="description" content="Shop our exclusive merchandise!" />
       </head>
       <body>

@@ -6,18 +6,66 @@ import Header from '@/app/components/header';
 import { motion } from "framer-motion";
 import { History } from 'lucide-react';
 
+// Modal component to display order items
+// Updated OrderDetailsModal component to beautify UI and add item subtotal
+const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+        <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+        <button
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none"
+          onClick={onClose}
+        >
+          ✕
+        </button>
+        {Array.isArray(line_items) && line_items.map((item, index) => (
+          <div key={index} className="flex items-start mb-4 space-x-4 border-b pb-4 last:border-none">
+            <img
+              src={`https://inventory.zoho.in/api/v1/items/${item.item_id}/image?organization_id=60032377997`}
+              alt={item.name}
+              className="h-16 w-16 object-contain bg-gray-100 rounded-md"
+              onError={(e) => (e.currentTarget.src = '/fallback-image.png')} // Fallback image
+            />
+            <div className="flex-1">
+              <h4 className="font-semibold text-base text-gray-800">{item.name}</h4>
+              <p className="text-gray-600">Quantity: {item.quantity}</p>
+              <p className="text-gray-600">Rate: ₹ {parseFloat(item.rate).toFixed(2)}</p>
+              <p className="font-semibold text-gray-800">
+                Subtotal: ₹ {(parseFloat(item.rate) * item.quantity).toFixed(2)}
+              </p>
+            </div>
+          </div>
+        ))}
+        <div className="mt-4 flex justify-end">
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-300"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedLineItems, setSelectedLineItems] = useState([]);
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const fetchOrderStatus = async () => {
     try {
-      const response = await axios.get(baseURL+"/get-sales-order"); // Replace with your API endpoint
-      
+      const response = await axios.get(baseURL + "/get-sales-order");
       console.log(response);
-      setOrders(response.data.details.salesorders); // Assume the API returns an array of orders
+      setOrders(response.data.salesorders); // Ensure this matches your API structure
     } catch (error) {
       setError("Failed to fetch order status");
       console.error("Error fetching order status:", error);
@@ -30,10 +78,29 @@ const OrderHistory = () => {
     fetchOrderStatus();
   }, []);
 
+  const handleViewDetails = async (salesOrderId:any) => {
+   
+    try {
+      const response = await axios.get(`${baseURL}/api/sales-order-details`,{
+        params: {
+          salesorder_id:salesOrderId
+      }});
+      
+      if (response.status === 200) {
+        setSelectedLineItems(response.data.salesorder.line_items); 
+        setIsModalOpen(true);
+      } else {
+        setError("Failed to fetch sales order details");
+      }
+    } catch (error) {
+      console.error("Error fetching sales order details:", error);
+      setError("Failed to fetch sales order details");
+    }
+  };
+
   const renderProgressLine = (status:any) => {
     const steps = ["Order Placed", "Order Confirmation", "Dispatched"];
-
-    const statusIndex=0;
+    const statusIndex = 0; // Replace with logic to calculate the current status index
 
     return (
       <div className="flex flex-col items-end w-full mt-4 sm:mt-0">
@@ -72,16 +139,29 @@ const OrderHistory = () => {
     );
   };
 
-  const pageTitle = "Order History";
+  const formatDate = (dateString:any) => {
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const month = date.toLocaleString('default', { month: 'long' });
+    const year = date.getFullYear();
 
-  useEffect(() => {
-    document.title = pageTitle;
-  }, [pageTitle]);
+    const getOrdinalSuffix = (n:any) => {
+      if (n > 3 && n < 21) return 'th'; 
+      switch (n % 10) {
+        case 1: return 'st';
+        case 2: return 'nd';
+        case 3: return 'rd';
+        default: return 'th';
+      }
+    };
+
+    return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Head>
-        <title>{pageTitle}</title>
+        <title>Order History</title>
         <meta
           name="description"
           content="View and manage your past orders in your order history. Check details, status, price and more."
@@ -94,7 +174,7 @@ const OrderHistory = () => {
         <div className='py-8 sm:py-12 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
           <div className="flex gap-3">
             <History strokeWidth={1.25} />
-            <h1 className="text-xl font-semibold mb-8 sm:mb-12 text-gray-800">{pageTitle}</h1>
+            <h1 className="text-xl font-semibold mb-8 sm:mb-12 text-gray-800">Order History</h1>
           </div>
           {loading ? (
             <p>Loading...</p>
@@ -116,58 +196,25 @@ const OrderHistory = () => {
                   </div>
                   {renderProgressLine(order.status)}
                 </div>
-                <p className="text-gray-600 mb-4 sm:mb-6">Order Date: {order.date}</p>
-                {order.items ? (
-                  order.items.map((item:any, itemIndex:any) => (
-                    <div
-                      key={itemIndex}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-4 sm:mt-6 bg-gray-50 p-4 rounded-lg"
-                    >
-                      <div className="flex items-center mb-4 sm:mb-0">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-16 h-16 sm:w-20 sm:h-20 object-cover mr-4 sm:mr-6 rounded-md shadow-md"
-                        />
-                        <div>
-                          <h4 className="font-semibold text-base sm:text-lg text-gray-800">{item.name}</h4>
-                          <p className="text-gray-600">
-                            ₹ {item.rate} x {item.quantity}
-                          </p>
-                        </div>
-                      </div>
-                      <div>
-                        <p className="font-semibold text-lg sm:text-xl text-gray-800">
-                          ₹ {(parseFloat(item.rate) * item.quantity).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="flex flex-col sm:flex-row justify-between mt-4 sm:mt-6 bg-gray-50 p-4 rounded-lg">
-                   
-                  </div>
-                )}
-                {order.items && (
-                  <div className="flex justify-between mt-6 sm:mt-8 pt-4 border-t border-gray-200">
-                    <p className="text-base sm:text-lg font-semibold text-gray-600">Item Subtotal:</p>
-                    <p className="text-xl sm:text-2xl font-semibold text-gray-800">
-                      ₹{" "}
-                      {order.items
-                        .reduce(
-                          (total:any, item:any) =>
-                            total + parseFloat(item.rate) * item.quantity,
-                          
-                        )
-                        .toFixed(2)}
-                    </p>
-                  </div>
-                )}
+                <p className="text-gray-600 mb-4 sm:mb-6">Order Date: {formatDate(order.date)}</p>
+                <button
+                  className="bg-blue-500 text-white py-2 px-4 rounded"
+                  onClick={() => handleViewDetails(order.salesorder_id)} 
+                >
+                  View Details
+                </button>
               </motion.div>
             ))
           )}
         </div>
       </main>
+
+      {/* Order Details Modal */}
+      <OrderDetailsModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        line_items={selectedLineItems}
+      />
     </div>
   );
 };

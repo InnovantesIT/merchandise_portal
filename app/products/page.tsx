@@ -50,6 +50,7 @@ const Products = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(baseURL + "/api/zoho/items");
+        console.log(response);
         const productsWithGroup = response.data.items.map((item: any) => ({
           ...item,
           group_name: item.group_name,

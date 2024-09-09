@@ -45,17 +45,17 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   }, []);
 
   return (
-    <header className="bg-black text-white sm:p-0 p-4 flex flex-col sm:flex-row items-center sm:items-start shadow-md">
+    <header className="bg-black text-white sm:p-0 p-5 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px]">
       <div className="flex justify-center sm:justify-start sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
         <Link href="/products">
           <img
-            src="img/image 15.webp"
+            src="/img/headerlogo.png"
             alt="Logo"
-            className="w-28 h-16"
+            className='mt-4'
           />
         </Link>
       </div>
-      <div className="flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-4 mt-0 sm:mr-6 mr-0">
+      <div className="flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-10 mt-0 sm:mr-6 mr-0 text-xl">
         <div className="flex flex-row space-x-6 sm:mr-7 mr-3">
           <Link href="/products">
             <span
@@ -92,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
             >
               Cart
               {cartItemCount > 0 && (
-                <span className="absolute -top-3 left-6 px-2 py-1 text-[10px] font-bold text-white bg-red-800 rounded-full">
+                <span className="absolute -top-6 left-8  px-2 text-[10px] font-bold text-white bg-red-800 rounded-full">
                   {cartItemCount}
                 </span>
               )}
@@ -104,7 +104,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
           <div className="relative">
             <button
               onClick={toggleDropdown}
-              className="relative pb-2 cursor-pointer transition duration-300 ease-in-out text-gray-400 hover:text-white"
+              className="relative pb-2 cursor-pointer transition duration-300 ease-in-out text-gray-400 hover:text-white "
               aria-label="User options"
             >
               <UserCircle size={24} />
