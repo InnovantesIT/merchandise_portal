@@ -17,7 +17,7 @@ interface Product {
   image: string;
   item_id: string;
   price_per_unit: string;
-  total_price: string;
+  total_price: string;         
   customer_id:string;
 }
 
@@ -108,8 +108,14 @@ const CartPage: React.FC = () => {
       })),
       reference_number: paymentDetails.reference,
       date: paymentDetails.date,
+      custom_fields: [
+        {
+          label: "Payment Mode", 
+          value: paymentDetails.mode,
+        },
+
+      ],
     };
-  
     // Ensure there are items to order
     if (salesOrderData.line_items.length === 0) {
       setErrorMessage('No items in the cart to place an order.');
@@ -408,3 +414,4 @@ const CartPage: React.FC = () => {
 };
 
 export default CartPage;
+

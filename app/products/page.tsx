@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useCart } from "@/app/context/cartcontext";
 import ProductCard from "@/app/components/productcard";
@@ -10,6 +10,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Header from "@/app/components/header";
 import { motion, AnimatePresence } from "framer-motion";
 import { RiFilterLine, RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
+import { UserContext } from "@/app/context/usercontext"; // Import the UserContext
 
 interface Product {
   name: string;
@@ -24,6 +25,8 @@ interface Product {
 
 const Products = () => {
   const { addToCart } = useCart();
+  const userContext = useContext(UserContext); // Access the context
+  const user = userContext?.user; // Safely access user
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(true);
@@ -31,20 +34,15 @@ const Products = () => {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   useEffect(() => {
-    // Function to determine if the screen is mobile
     const handleResize = () => {
       const isCurrentlyMobile = window.innerWidth <= 768;
       setIsMobile(isCurrentlyMobile);
-      // Close filter initially if on mobile
       if (isCurrentlyMobile) {
         setIsFilterOpen(false);
       }
     };
-    // Add event listener on component mount
-    handleResize(); // Check on initial load
+    handleResize();
     window.addEventListener("resize", handleResize);
-
-    // Clean up event listener on component unmount
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -191,17 +189,14 @@ const Products = () => {
           ></div>
 
           <div className="absolute inset-0 flex items-center ml-10 sm:ml-20 z-10">
-          <motion.div
-  initial={{ opacity: 0, y: -20 }}
-  animate={{ opacity: 1, y: 0 }}
-  transition={{ duration: 0.5 }}
-  className="text-white text-lg font-thin font-sans  sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
->
-  Hi Dealer. Welcome to Renault.
-  <br className="sm:hidden" />
-  Order merchandise now!
-</motion.div>
-
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-white text-lg font-thin font-sans  sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
+            >
+              Hi {user ? user.name : "Guest"}.Welcome Back !           
+              </motion.div>
           </div>
         </motion.div>
 
