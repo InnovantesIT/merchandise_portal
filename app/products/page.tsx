@@ -68,7 +68,7 @@ const Products = () => {
   const handleAddToCart = async (product: Product) => {
     try {
       await axios.post(baseURL + "/api/cart", {
-        customer_id: "1977850000000020000",
+        customer_id: "1977850000000031002",
         item_id: product.item_id,
         qty: 1,
         price_per_unit: product.rate,

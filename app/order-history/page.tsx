@@ -192,7 +192,7 @@ const OrderHistory = () => {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
                   <div className="w-full sm:w-auto mb-4 sm:mb-0">
                     <p className="text-gray-500 text-sm">Order Number</p>
-                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-800 whitespace-nowrap">{order.salesorder_number}</h3>
+                    <h3 className="text-xl  font-semibold text-gray-800 whitespace-nowrap">{order.salesorder_number}</h3>
                   </div>
                   {renderProgressLine(order.status)}
                 </div>
