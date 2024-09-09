@@ -46,7 +46,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart }) => {
         src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
         alt={product.name}
         className="h-48 w-full object-contain mb-4"
-        onError={(e) => (e.currentTarget.src = '/fallback-image.png')} // Fallback image
+        
       />
       <div className="text-center">
         <h2 className="text-lg font-medium text-gray-800">{product.name}</h2>
