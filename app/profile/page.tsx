@@ -51,7 +51,7 @@ function ProfilePage() {
   );
 }
 
-function ChangePasswordModal({ closeModal }) {
+function ChangePasswordModal({ closeModal }:any) {
   const [showPassword, setShowPassword] = useState(false);
   const togglePasswordVisibility = () => setShowPassword(!showPassword);
 
