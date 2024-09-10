@@ -23,12 +23,7 @@ const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
         </button>
         {Array.isArray(line_items) && line_items.map((item, index) => (
           <div key={index} className="flex items-start mb-4 space-x-4 border-b pb-4 last:border-none">
-            <img
-              src={`https://inventory.zoho.in/api/v1/items/${item.item_id}/image?organization_id=60032377997`}
-              alt={item.name}
-              className="h-16 w-16 object-contain bg-gray-100 rounded-md"
-              onError={(e) => (e.currentTarget.src = '/fallback-image.png')} // Fallback image
-            />
+           
             <div className="flex-1">
               <h4 className="font-semibold text-base text-gray-800">{item.name}</h4>
               <p className="text-gray-600">Quantity: {item.quantity}</p>
@@ -41,7 +36,7 @@ const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
         ))}
         <div className="mt-4 flex justify-end">
           <button
-            className="bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded transition duration-300"
+            className="bg-black text-white py-2 px-4 rounded transition duration-300"
             onClick={onClose}
           >
             Close
@@ -198,7 +193,7 @@ const OrderHistory = () => {
                 </div>
                 <p className="text-gray-600 mb-4 sm:mb-6">Order Date: {formatDate(order.date)}</p>
                 <button
-                  className="bg-blue-500 text-white py-2 px-4 rounded"
+                  className="bg-black text-white py-2 px-4 rounded"
                   onClick={() => handleViewDetails(order.salesorder_id)} 
                 >
                   View Details

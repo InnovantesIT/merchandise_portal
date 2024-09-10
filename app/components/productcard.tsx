@@ -2,25 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight } from 'lucide-react';
+import axios from 'axios';
+import FetchImage from '../action/FetchImage';
 
 interface Product {
   name: string;
   rate: number;
   item_id: string;
   quantity: number;
+  image_name:string;
+  image_path:string;
 }
 
 interface CardProps {
   product: Product;
   onAddToCart: (product: Product) => void;
+  auth:string;
 }
 
-const ProductCard: React.FC<CardProps> = ({ product, onAddToCart }) => {
+const ProductCard: React.FC<CardProps> = ({ product, onAddToCart , auth}) => {
   const [quantity, setQuantity] = useState(product.quantity);
+  const [imageContent, setImageContent] = useState("");
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const router = useRouter();
+  const fetchProductImage = async () => {
+    const p = await FetchImage(product,auth)
+    setImageContent(p)
+    console.log()
+  };
 
   useEffect(() => {
+    fetchProductImage();
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
   }, [product.quantity]);
@@ -42,8 +54,9 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart }) => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
+    
       <img
-        src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
+        src={imageContent}
         alt={product.name}
         className="h-48 w-full object-contain mb-4"
         

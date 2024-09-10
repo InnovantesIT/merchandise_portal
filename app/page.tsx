@@ -1,4 +1,4 @@
-"use client";
+"use client"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
@@ -8,7 +8,6 @@ import 'react-toastify/dist/ReactToastify.css';
 import ForgetPasswordModal from '@/app/components/forgetpassword';
 import { motion } from 'framer-motion';
 
-
 export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -16,10 +15,10 @@ export default function Login() {
   const [rightBgColor, setRightBgColor] = useState('#F6F8FD');
   const [errors, setErrors] = useState({ username: '', password: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isValid, setIsValid] = useState(false); 
-  const [hasSubmitted, setHasSubmitted] = useState(false); // New state for tracking form submission
-const baseURL = process.env.NEXT_PUBLIC_BASE_URL
+  const [isValid, setIsValid] = useState(false);
+  const [hasSubmitted, setHasSubmitted] = useState(false);
   const router = useRouter();
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   useEffect(() => {
     const fetchBackgroundColors = async () => {
@@ -44,36 +43,47 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL
   const validate = () => {
     let valid = true;
     const newErrors = { username: '', password: '' };
-
+  
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(username)) {
+  
+    if (username.trim() === '') {
+      newErrors.username = "Field can't be empty";
+      valid = false;
+    } else if (!emailRegex.test(username)) {
       newErrors.username = 'Please enter a valid email address';
       valid = false;
     }
-
+  
     if (password.trim() === '') {
-      newErrors.password = 'Please enter a password';
+      newErrors.password = "Field can't be empty";
       valid = false;
     }
-
+  
     setErrors(newErrors);
     setIsValid(valid);
   };
+  
 
-  const handleSubmit = async (event:any) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setHasSubmitted(true); // Set the flag to true when submitting
+    setHasSubmitted(true);
 
     if (isValid) {
       try {
-        const response = await axios.post(baseURL+'/api/login', {
+        const response = await axios.post(`${baseURL}/api/login`, {
           username,
           password,
         });
 
         if (response.status === 200) {
-          const { token } = response.data;
-          localStorage.setItem('token', token);
+          const { token, name, customer_id } = response.data;
+          if (typeof window !== 'undefined') {
+            // Client-side only code
+            localStorage.setItem('token', token);
+            localStorage.setItem('username', username);
+            localStorage.setItem('name', name);
+            localStorage.setItem('customer_id', customer_id);
+          }
           router.push('products');
         }
       } catch (error) {
@@ -86,6 +96,7 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL
       }
     }
   };
+
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -194,7 +205,6 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               type="submit" 
-              disabled={!isValid}
               className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${!isValid ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               Confirm 
@@ -209,3 +219,4 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL
     </div>
   );
 }
+

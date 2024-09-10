@@ -10,7 +10,8 @@ import "react-toastify/dist/ReactToastify.css";
 import Header from "@/app/components/header";
 import { motion, AnimatePresence } from "framer-motion";
 import { RiFilterLine, RiArrowDownSLine, RiArrowUpSLine } from "react-icons/ri";
-import { UserContext } from "@/app/context/usercontext"; // Import the UserContext
+import { UserContext } from "@/app/context/usercontext"; 
+import { useRouter } from 'next/navigation'; // Import useRouter for navigation
 
 interface Product {
   name: string;
@@ -25,13 +26,38 @@ interface Product {
 
 const Products = () => {
   const { addToCart } = useCart();
-  const userContext = useContext(UserContext); // Access the context
-  const user = userContext?.user; // Safely access user
+  const userContext = useContext(UserContext);
+  const user = userContext?.user;
   const [products, setProducts] = useState<Product[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [isFilterOpen, setIsFilterOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [userName, setUserName] = useState('');
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const router = useRouter(); // Initialize router
+  const [authToken, setAuthToken] = useState('') ;
+
+  useEffect(() => {
+    // Check if the user is authenticated by checking for a token
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Redirect to login page if no token is found
+      router.push('/');
+      return; // Stop further execution of useEffect
+    }
+
+    // Fetch the name and customer_id from local storage
+    const storedName = localStorage.getItem('name');
+    if (storedName) {
+      setUserName(storedName);
+    }
+
+    const storedCustomerId = localStorage.getItem('customer_id');
+    if (storedCustomerId) {
+      setCustomerId(storedCustomerId);
+    }
+  }, [router]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -50,7 +76,7 @@ const Products = () => {
     const fetchProducts = async () => {
       try {
         const response = await axios.get(baseURL + "/api/zoho/items");
-        console.log(response);
+        setAuthToken(response.data.auth);
         const productsWithGroup = response.data.items.map((item: any) => ({
           ...item,
           group_name: item.group_name,
@@ -66,9 +92,14 @@ const Products = () => {
   }, [baseURL]);
 
   const handleAddToCart = async (product: Product) => {
+    if (!customerId) {
+      showToast("Customer ID not found. Please log in again.", "error");
+      return;
+    }
+
     try {
       await axios.post(baseURL + "/api/cart", {
-        customer_id: "1977850000000031002",
+        customer_id: customerId,
         item_id: product.item_id,
         qty: 1,
         price_per_unit: product.rate,
@@ -141,7 +172,6 @@ const Products = () => {
         selectedFilters.has(product.group_name ?? "")
     )
     .sort((a, b) => (a.group_name ?? "").localeCompare(b.group_name ?? ""));
-
   const cartItemCount = products.reduce(
     (acc, product) => acc + product.quantity,
     0
@@ -194,10 +224,10 @@ const Products = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-white text-lg font-thin font-sans  sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
+              className="text-white text-lg font-thin font-sans sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
             >
-              Hi {user ? user.name : "Guest"}.Welcome Back !           
-              </motion.div>
+              Hi {userName || "Guest"}. Welcome Back !
+            </motion.div>
           </div>
         </motion.div>
 
@@ -274,7 +304,7 @@ const Products = () => {
             </div>
             <div className="md:w-5/6 w-full">
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                {filteredProducts.map((product, index) => (
+                {filteredProducts.map((product:any, index:any) => (
                   <motion.div
                     key={index}
                     initial={{ opacity: 0, scale: 0.9 }}
@@ -283,6 +313,7 @@ const Products = () => {
                   >
                     <ProductCard
                       product={product}
+                      auth={authToken}
                       onAddToCart={() => handleAddToCart(product)}
                     />
                   </motion.div>

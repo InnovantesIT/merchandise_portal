@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
@@ -8,6 +9,7 @@ import Header from '@/app/components/header';
 import { useCart } from '@/app/context/cartcontext';
 import Head from 'next/head';
 import CustomDropdown from '@/app/components/customdropdown';
+import { useRouter } from 'next/navigation'; // Import useRouter for navigation
 
 interface Product {
   id: number; 
@@ -31,27 +33,47 @@ const CartPage: React.FC = () => {
   });
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const baseURL = process.env.NEXT_PUBLIC_BASE_URL
+  const [customerId, setCustomerId] = useState<string>('');
+  const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const router = useRouter(); // Initialize router for redirection
+
+  // Check for user authentication on mount
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Redirect to home page if no token is found
+      router.push('/');
+      return; // Exit early to prevent further execution
+    }
+
+    // Fetch customer ID from local storage
+    const storedCustomerId = localStorage.getItem('customer_id');
+    if (storedCustomerId) {
+      setCustomerId(storedCustomerId);
+    }
+
+    // Fetch cart items when the component mounts
+    fetchCartItems();
+  }, [router]);
 
   const fetchCartItems = async () => {
     try {
-      const response = await axios.get(baseURL+'/api/cart'); 
+      const response = await axios.get(baseURL + '/api/cart', {
+        params: { customer_id: customerId }
+      });
       setCartItems(response.data);
     } catch (error) {
       console.error('Error fetching cart items:', error);
     }
   };
   
-  useEffect(() => {
-    fetchCartItems(); // Fetch cart items when the component mounts
-  }, []);
-  
   const handleUpdateQuantity = async (product: Product, change: number) => {
     const newQuantity = product.qty + change;
     if (newQuantity > 0) {
       try {
-        const response = await axios.put(baseURL+`/api/cart/${product.id}`, {
+        const response = await axios.put(baseURL + `/api/cart/${product.id}`, {
           qty: newQuantity,
+          customer_id: customerId,
         });
         if (response.status === 200) {
           setCartItems((prevItems) =>
@@ -71,9 +93,9 @@ const CartPage: React.FC = () => {
 
   const handleRemoveFromCart = async (product: Product) => {
     try {
-      console.log(product.id)
-      const response = await axios.delete(baseURL+`/api/cart`,{data:
-        {id:product.id,customer_id:product.customer_id}}); 
+      const response = await axios.delete(baseURL + `/api/cart`, { 
+        data: { id: product.id, customer_id: customerId } 
+      });
       if (response.status === 200) {
         setCartItems(cartItems.filter((item) => item.id !== product.id));
       }
@@ -86,19 +108,16 @@ const CartPage: React.FC = () => {
   const handlePaymentSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
   
-    // Validate payment details
     if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.date) {
       setErrorMessage('All payment details are required.');
       return;
     }
   
-    // Generate sales order number with timestamp
     const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
     const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
   
-    // Construct sales order data
     const salesOrderData = {
-      customer_id: "1977850000000031002",
+      customer_id: customerId,
       salesorder_number: salesOrderNumber,
       line_items: cartItems.map((item) => ({
         item_id: item.item_id,
@@ -113,27 +132,22 @@ const CartPage: React.FC = () => {
           label: "Payment Mode", 
           value: paymentDetails.mode,
         },
-
       ],
     };
-    // Ensure there are items to order
+  
     if (salesOrderData.line_items.length === 0) {
       setErrorMessage('No items in the cart to place an order.');
       return;
     }
   
     try {
-      // Attempt to create a sales order
-      console.log(salesOrderData)
-      const response = await axios.post(baseURL+'/create-sales-order', salesOrderData);
+      const response = await axios.post(baseURL + '/create-sales-order', salesOrderData);
   
-      console.log(response)
       if (response.status === 200 || response.status === 201) {
         setIsPaymentPlaced(true);
         setCanEditItems(false);
         setErrorMessage(null);
   
-        // Attempt to remove items from the cart after successful order
         try {
           await Promise.all(
             cartItems.map(async (item) => {
@@ -159,15 +173,15 @@ const CartPage: React.FC = () => {
     }
   };
   
-  
   const DeleteFromCart = async (product: Product) => {
     try {
-      const response = await axios.delete(baseURL+`/api/cart`, {data:
-        {customer_id:product.customer_id}});
+      const response = await axios.delete(baseURL + `/api/cart`, { 
+        data: { id: product.id, customer_id: customerId } 
+      });
   
       if (response.status === 200) {
         setCartItems((prevItems) =>
-          prevItems.filter((item) => item.id !== product.id) // Corrected condition here
+          prevItems.filter((item) => item.id !== product.id)
         );
       }
     } catch (error) {
@@ -175,7 +189,6 @@ const CartPage: React.FC = () => {
       setErrorMessage('Failed to remove item from cart.');
     }
   };
-  
   
   const handleEditPaymentDetails = () => {
     setIsPaymentPlaced(false);
@@ -305,7 +318,7 @@ const CartPage: React.FC = () => {
                   <BsHandbag className="mt-1 font-semibold font-sans" />
                   <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
                 </div>
-                <div className="flex justify-between items-center text-blue-600 font-semibold font-sans">
+                <div className="flex justify-between items-center text-black font-semibold font-sans">
                   <span>Item Subtotal:</span>
                   <span className="text-xl md:text-2xl">
                     ₹ {cartItems.reduce((total, item) => total + parseFloat(item.price_per_unit) * item.qty, 0).toFixed(2)}
@@ -414,4 +427,3 @@ const CartPage: React.FC = () => {
 };
 
 export default CartPage;
-

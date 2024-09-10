@@ -14,28 +14,42 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
 
+  // Function to update active link based on current path
   const handleNavigation = () => {
-    setActiveLink(window.location.pathname);
+    if (typeof window !== 'undefined') {
+      setActiveLink(window.location.pathname);
+    }
   };
 
+  // Function to show logout confirmation dialog
   const handleLogout = () => {
     setShowLogoutAlert(true);
   };
 
+  // Function to close the logout confirmation dialog
   const closeLogoutAlert = () => {
     setShowLogoutAlert(false);
   };
 
+  // Function to confirm logout: remove token and redirect
   const confirmLogout = () => {
+    console.log('Confirm logout triggered');
+    localStorage.removeItem('token'); // Remove token from localStorage
+    console.log('Token removed from local storage');
     setShowLogoutAlert(false);
-    router.push('/'); // Redirect to the home page after logout
+
+    setTimeout(() => {
+      router.push('/'); // Ensure routing works as expected
+    }, 100);
   };
 
+  // Function to toggle the dropdown menu visibility
   const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-    setShowLogoutAlert(false); // Ensure that the logout alert is hidden when toggling the dropdown
+    setIsDropdownOpen((prev) => !prev);
+    setShowLogoutAlert(false); // Hide logout alert when toggling the dropdown
   };
 
+  // Effect to set the active link based on navigation
   useEffect(() => {
     handleNavigation();
     window.addEventListener('popstate', handleNavigation);
@@ -48,11 +62,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     <header className="bg-black text-white sm:p-0 p-5 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px]">
       <div className="flex justify-center sm:justify-start sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
         <Link href="/products">
-          <img
-            src="/img/headerlogo.png"
-            alt="Logo"
-            className='mt-4'
-          />
+          <img src="/img/headerlogo.png" alt="Logo" className='mt-4' />
         </Link>
       </div>
       <div className="flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-10 mt-0 sm:mr-6 mr-0 text-xl">
@@ -92,7 +102,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
             >
               Cart
               {cartItemCount > 0 && (
-                <span className="absolute -top-6 left-8  px-2 text-[10px] font-bold text-white bg-red-800 rounded-full">
+                <span className="absolute -top-6 left-8 px-2 text-[10px] font-bold text-white bg-red-800 rounded-full">
                   {cartItemCount}
                 </span>
               )}
@@ -126,10 +136,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                         <UserCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                         Profile
                       </Link>
-                      <Link href="/help" className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                        <HelpCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                        Help
-                      </Link>
+                     
                       <Link href="/support" className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
                         <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
                         Support
