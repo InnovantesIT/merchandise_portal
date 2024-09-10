@@ -87,7 +87,7 @@ export default function Login() {
   
           // Check if the username matches a specific condition
           if (username === 'oem@example.com') {
-            router.push('/table'); // Redirect to dealer admin page
+            router.push('/dealer-orders'); // Redirect to dealer admin page
           } else {
             router.push('/products'); // Redirect to products page
           }
