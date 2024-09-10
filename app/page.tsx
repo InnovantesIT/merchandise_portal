@@ -196,7 +196,7 @@ export default function Login() {
               />
               {errors.password && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
             </div>
-            <div className="text-sm text-left mb-6">
+            {/* <div className="text-sm text-left mb-6">
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -206,7 +206,7 @@ export default function Login() {
               >
                 Forgot Password?
               </motion.button>
-            </div>
+            </div> */}
             <motion.button 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}

@@ -128,11 +128,11 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
           
           {/* Always render Dealer Admin link */}
           {username === 'oem@example.com' && (
-            <Link href="/table">
+            <Link href="/dealer-orders">
               <span
                 onClick={handleNavigation}
                 className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
-                  activeLink === '/table' ? 'text-white' : 'text-gray-400'
+                  activeLink === '/delaer-orders' ? 'text-white' : 'text-gray-400'
                 }`}
               >
                 Dealer Orders
@@ -169,10 +169,11 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                         Profile
                       </Link>
                      
-                      <Link href="/support" className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
-                        <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                        Support
-                      </Link>
+                      <a href="mailto:support@xyz.com" className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900">
+  <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+  Support
+</a>
+
                       <button
                         onClick={handleLogout}
                         className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"

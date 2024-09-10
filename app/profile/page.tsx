@@ -36,14 +36,14 @@ function ProfilePage() {
       <div className="flex flex-col items-center py-20">
         <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
           <h1 className="text-3xl font-semibold mb-6">{name}</h1>
-          <p className="mb-3"><span className="font-medium">Email:</span> {username}</p>
-          <p className="mb-3"><span className="font-medium">Username:</span> {name}</p>
-          <button 
+          <p className="mb-3"><span className="font-medium"></span> {username}</p>
+          <p className="mb-3"><span className="font-medium"></span> {name}</p>
+          {/* <button 
             className="mt-4 inline-flex items-center text-black hover:text-black"
             onClick={openModal}
           >
             <i className="fas fa-lock mr-2"></i>Change Password
-          </button>
+          </button> */}
         </div>
         {isModalOpen && <ChangePasswordModal closeModal={closeModal} />}
       </div>

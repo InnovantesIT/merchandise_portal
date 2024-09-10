@@ -138,13 +138,13 @@ const formatDate = (dateString: string) => {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${
                         order.status === 'Dispatched'
                           ? 'bg-blue-500 text-white'
                           : 'bg-green-100 text-green-800'
                       }`}
                     >
-                      {order.status === 'Draft' ? 'Order Placed' : order.status || 'N/A'}
+                      {order.status === 'draft' ? 'Order Placed' : order.status || 'N/A'}
                     </span>
                   </td>
                 </tr>

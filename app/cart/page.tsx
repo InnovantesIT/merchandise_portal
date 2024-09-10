@@ -250,7 +250,7 @@ const CartPage: React.FC = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3, delay: index * 0.1 }}
-                        className="relative flex flex-col md:flex-row items-start md:items-center p-4 border rounded-lg mb-4 bg-[#FBFEFF]"
+                        className="relative flex flex-col md:flex-row items-start md:items-center p-10 border rounded-lg mb-4 bg-[#FBFEFF]"
                       >
                         <button
                           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -259,11 +259,7 @@ const CartPage: React.FC = () => {
                         >
                           <X size={18} />
                         </button>
-                        <div className="flex-shrink-0 w-full md:w-auto">
-                          <img
-                            src={`https://inventory.zoho.in/api/v1/items/${product.item_id}/image?organization_id=60032377997`}
-                            className="object-cover w-48 h-48 md:w-auto"
-                          />
+                        <div className=" w-full md:w-auto">
                         </div>
                         <div className="flex-grow mt-4 md:mt-0 md:ml-4 flex flex-col md:flex-row justify-between w-full">
                           <div>

@@ -161,9 +161,9 @@ const Products = () => {
     });
   };
 
-  const uniqueGroupNames = Array.from(
-    new Set(products.map((product) => product.group_name ?? "").filter(Boolean))
-  );
+  // const uniqueGroupNames = Array.from(
+  //   new Set(products.map((product) => product.group_name ?? "").filter(Boolean))
+  // );
 
   const filteredProducts = products
     .filter(
@@ -224,9 +224,9 @@ const Products = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-white text-lg font-thin font-sans sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4"
+              className="text-white text-lg font-sans sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4 font-bold"
             >
-              Hi {userName || "Guest"}. Welcome Back !
+              Hi {userName || "Guest"}. Welcome Back!
             </motion.div>
           </div>
         </motion.div>
@@ -277,7 +277,7 @@ const Products = () => {
                         />
                         <span className="text-gray-700 capitalize">All</span>
                       </motion.label>
-                      {uniqueGroupNames.map((groupName) => (
+                      {/* {uniqueGroupNames.map((groupName) => (
                         <motion.label
                           key={groupName}
                           className="flex items-center space-x-3 cursor-pointer"
@@ -296,7 +296,7 @@ const Products = () => {
                           />
                           <span className="text-gray-700 capitalize">{groupName}</span>
                         </motion.label>
-                      ))}
+                      ))} */}
                     </motion.div>
                   )}
                 </AnimatePresence>
