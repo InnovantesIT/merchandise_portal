@@ -12,6 +12,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   const [activeLink, setActiveLink] = useState('');
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [username, setUsername] = useState(''); // State for managing username
   const router = useRouter();
 
   // Function to update active link based on current path
@@ -58,6 +59,14 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     };
   }, []);
 
+  // Effect to get the username from local storage
+  useEffect(() => {
+    const storedUsername = localStorage.getItem('username');
+    if (storedUsername) {
+      setUsername(storedUsername);
+    }
+  }, []);
+
   return (
     <header className="bg-black text-white sm:p-0 p-5 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px]">
       <div className="flex justify-center sm:justify-start sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
@@ -67,50 +76,73 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
       </div>
       <div className="flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-10 mt-0 sm:mr-6 mr-0 text-xl">
         <div className="flex flex-row space-x-6 sm:mr-7 mr-3">
-          <Link href="/products">
-            <span
-              onClick={handleNavigation}
-              className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
-                activeLink === '/products' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Home
-              {activeLink === '/products' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
-              )}
-            </span>
-          </Link>
-          <Link href="/order-history">
-            <span
-              onClick={handleNavigation}
-              className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
-                activeLink === '/order-history' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Previous Orders
-              {activeLink === '/order-history' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
-              )}
-            </span>
-          </Link>
-          <Link href="/cart">
-            <span
-              onClick={handleNavigation}
-              className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out flex items-center gap-1 hover:text-white ${
-                activeLink === '/cart' ? 'text-white' : 'text-gray-400'
-              }`}
-            >
-              Cart
-              {cartItemCount > 0 && (
-                <span className="absolute -top-6 left-8 px-2 text-[10px] font-bold text-white bg-red-800 rounded-full">
-                  {cartItemCount}
+          {/* Conditionally render nav items based on username */}
+          {username !== 'oem@example.com' && (
+            <>
+              <Link href="/products">
+                <span
+                  onClick={handleNavigation}
+                  className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
+                    activeLink === '/products' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  Home
+                  {activeLink === '/products' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
+                  )}
                 </span>
-              )}
-              {activeLink === '/cart' && (
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
-              )}
-            </span>
-          </Link>
+              </Link>
+              <Link href="/order-history">
+                <span
+                  onClick={handleNavigation}
+                  className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
+                    activeLink === '/order-history' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  Previous Orders
+                  {activeLink === '/order-history' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
+                  )}
+                </span>
+              </Link>
+              <Link href="/cart">
+                <span
+                  onClick={handleNavigation}
+                  className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out flex items-center gap-1 hover:text-white ${
+                    activeLink === '/cart' ? 'text-white' : 'text-gray-400'
+                  }`}
+                >
+                  Cart
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-6 left-8 px-2 text-[10px] font-bold text-white bg-red-800 rounded-full">
+                      {cartItemCount}
+                    </span>
+                  )}
+                  {activeLink === '/cart' && (
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
+                  )}
+                </span>
+              </Link>
+            </>
+          )}
+          
+          {/* Always render Dealer Admin link */}
+          {username === 'oem@example.com' && (
+            <Link href="/table">
+              <span
+                onClick={handleNavigation}
+                className={`relative pb-2 cursor-pointer transition duration-300 ease-in-out hover:text-white ${
+                  activeLink === '/table' ? 'text-white' : 'text-gray-400'
+                }`}
+              >
+                Dealer Orders
+                {activeLink === '/table' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
+                )}
+              </span>
+            </Link>
+          )}
+
           <div className="relative">
             <button
               onClick={toggleDropdown}

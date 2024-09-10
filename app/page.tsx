@@ -67,14 +67,14 @@ export default function Login() {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setHasSubmitted(true);
-
+  
     if (isValid) {
       try {
         const response = await axios.post(`${baseURL}/api/login`, {
           username,
           password,
         });
-
+  
         if (response.status === 200) {
           const { token, name, customer_id } = response.data;
           if (typeof window !== 'undefined') {
@@ -84,7 +84,13 @@ export default function Login() {
             localStorage.setItem('name', name);
             localStorage.setItem('customer_id', customer_id);
           }
-          router.push('products');
+  
+          // Check if the username matches a specific condition
+          if (username === 'oem@example.com') {
+            router.push('/table'); // Redirect to dealer admin page
+          } else {
+            router.push('/products'); // Redirect to products page
+          }
         }
       } catch (error) {
         console.error('Login failed:', error);
@@ -96,7 +102,7 @@ export default function Login() {
       }
     }
   };
-
+  
 
   const openModal = () => {
     setIsModalOpen(true);
