@@ -1,5 +1,5 @@
-"use client"
-import React, { useState, useEffect } from 'react';
+"use client";
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
 import axios from 'axios';
@@ -10,15 +10,21 @@ import { motion } from 'framer-motion';
 
 export default function Login() {
   const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState(['', '', '', '', '', '']); // Array to handle OTP inputs
   const [leftBgColor, setLeftBgColor] = useState('#000000');
   const [rightBgColor, setRightBgColor] = useState('#F6F8FD');
-  const [errors, setErrors] = useState({ username: '', password: '' });
+  const [errors, setErrors] = useState({ username: '', otp: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isValid, setIsValid] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [step, setStep] = useState('email'); // 'email' or 'otp'
+  const [hashedOtp, setHashedOtp] = useState(''); // State to store hashed OTP received from server
+  const [timer, setTimer] = useState(120); // Timer for 2 minutes
+  const [canResend, setCanResend] = useState(false); // State to manage resend button
+  const [loading, setLoading] = useState({ validateUsername: false, validateOtp: false, resendOtp: false }); // Loaders
   const router = useRouter();
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const otpRefs = useRef<(HTMLInputElement | null)[]>([]); // Allow null in refs
 
   useEffect(() => {
     const fetchBackgroundColors = async () => {
@@ -38,71 +44,138 @@ export default function Login() {
 
   useEffect(() => {
     validate();
-  }, [username, password]);
+  }, [username, otp, step]);
+
+  useEffect(() => {
+    if (step === 'otp' && timer > 0) {
+      const countdown = setInterval(() => setTimer((prev) => prev - 1), 1000);
+      return () => clearInterval(countdown);
+    } else if (timer === 0) {
+      setCanResend(true);
+    }
+  }, [step, timer]);
 
   const validate = () => {
     let valid = true;
-    const newErrors = { username: '', password: '' };
+    const newErrors = { username: '', otp: '' };
   
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (step === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   
-    if (username.trim() === '') {
-      newErrors.username = "Field can't be empty";
-      valid = false;
-    } else if (!emailRegex.test(username)) {
-      newErrors.username = 'Please enter a valid email address';
-      valid = false;
+      if (username.trim() === '') {
+        newErrors.username = "Field can't be empty";
+        valid = false;
+      } else if (!emailRegex.test(username)) {
+        newErrors.username = 'Please enter a valid email address';
+        valid = false;
+      }
     }
   
-    if (password.trim() === '') {
-      newErrors.password = "Field can't be empty";
-      valid = false;
+    // Validate OTP only if form is submitted on the OTP step
+    if (step === 'otp' && hasSubmitted) {
+      if (otp.some((digit) => digit === '')) {
+        newErrors.otp = "OTP can't be empty";
+        valid = false;
+      }
     }
   
     setErrors(newErrors);
     setIsValid(valid);
   };
   
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setHasSubmitted(true);
+    setHasSubmitted(true); // Set this to true on submit to trigger validation
+  
+    validate(); // Call validate after setting hasSubmitted to ensure errors are updated based on submission
   
     if (isValid) {
       try {
-        const response = await axios.post(`${baseURL}/api/login`, {
-          username,
-          password,
-        });
+        if (step === 'email') {
+          setLoading((prev) => ({ ...prev, validateUsername: true }));
+          const response = await axios.post(`${baseURL}/api/validate-email`, { username });
   
-        if (response.status === 200) {
-          const { token, name, customer_id } = response.data;
-          if (typeof window !== 'undefined') {
-            // Client-side only code
-            localStorage.setItem('token', token);
-            localStorage.setItem('username', username);
-            localStorage.setItem('name', name);
-            localStorage.setItem('customer_id', customer_id);
+          if (response.status === 200) {
+            setHashedOtp(response.data.hashedOtp); // Store the hashed OTP
+            setStep('otp');
+            setHasSubmitted(false); // Reset submission state for next step
+            toast.success('Email validated. Please enter the OTP sent to your email.');
+            setTimer(120); // Reset timer for OTP regeneration
+            setCanResend(false); // Disable resend button initially
           }
+        } else if (step === 'otp') {
+          setLoading((prev) => ({ ...prev, validateOtp: true }));
+          const fullOtp = otp.join('');
+          const response = await axios.post(`${baseURL}/api/validate-otp`, { 
+            username, 
+            otp: fullOtp, 
+            hashedOtp // Send the stored hashed OTP
+          });
   
-          // Check if the username matches a specific condition
-          if (username === 'oem@example.com') {
-            router.push('/dealer-orders'); // Redirect to dealer admin page
-          } else {
+          if (response.status === 200) {
+            const { token, name, customer_id } = response.data;
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('token', token);
+              localStorage.setItem('username', username);
+              localStorage.setItem('name', name);
+              localStorage.setItem('customer_id', customer_id);
+            }
             router.push('/products'); // Redirect to products page
           }
         }
-      } catch (error) {
-        console.error('Login failed:', error);
+      } catch (error: any) {
+        console.error('Validation failed:', error.response || error);
+        const errorMessage = step === 'email' ? 'Invalid username' : 'Invalid OTP';
         setErrors({
-          username: 'Invalid username or password',
-          password: 'Invalid username or password',
+          username: step === 'email' ? errorMessage : '',
+          otp: step === 'otp' ? errorMessage : '',
         });
-        toast.error('Invalid username or password');
+        toast.error('Validation failed');
+      } finally {
+        setLoading({ validateUsername: false, validateOtp: false, resendOtp: false });
       }
     }
   };
   
+  const handleOtpChange = (value: string, index: number) => {
+    if (/^\d$/.test(value) || value === '') {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      if (value !== '' && index < otp.length - 1) {
+        otpRefs.current[index + 1]?.focus(); // Safely access the next input
+      }
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
+      otpRefs.current[index - 1]?.focus(); // Safely move focus to the previous input
+    } else if (e.key === 'ArrowLeft' && index > 0) {
+      otpRefs.current[index - 1]?.focus(); // Safely move focus to the previous input
+    } else if (e.key === 'ArrowRight' && index < otp.length - 1) {
+      otpRefs.current[index + 1]?.focus(); // Safely move focus to the next input
+    }
+  };
+
+  const handleResendOtp = async () => {
+    try {
+      setLoading((prev) => ({ ...prev, resendOtp: true }));
+      const response = await axios.post(`${baseURL}/api/resend-otp`, { username });
+
+      if (response.status === 200) {
+        setHashedOtp(response.data.hashedOtp); // Update the hashed OTP
+        toast.success('OTP resent successfully.');
+        setTimer(120); // Reset timer after resending OTP
+        setCanResend(false); // Disable the resend button
+      }
+    } catch (error) {
+      console.error('Failed to resend OTP:', error);
+      toast.error('Failed to resend OTP');
+    } finally {
+      setLoading((prev) => ({ ...prev, resendOtp: false }));
+    }
+  };
 
   const openModal = () => {
     setIsModalOpen(true);
@@ -165,55 +238,65 @@ export default function Login() {
           className="bg-white p-10 rounded-lg shadow-lg w-full max-w-sm"
         >
           <form onSubmit={handleSubmit}>
-            <h2 className="text-lg font-light font-sans mb-4">LOGIN NOW</h2>
-            <div className="mb-4">
-              <label htmlFor="username" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Registered Email</label>
-              <motion.input 
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-                type="text" 
-                id="username" 
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                autoComplete="username"
-                className={`w-full px-4 py-2 border ${errors.username && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
-                placeholder="Enter Email Address"
-              />
-              {errors.username && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
-            </div>
-            <div className="mb-6">
-              <label htmlFor="password" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Password</label>
-              <motion.input 
-                whileFocus={{ scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-                type="password" 
-                id="password" 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete="current-password"
-                className={`w-full px-4 py-2 border ${errors.password && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
-                placeholder="Enter Password"
-              />
-              {errors.password && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
-            </div>
-            {/* <div className="text-sm text-left mb-6">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="button"
-                onClick={openModal}
-                className="hover:underline text-blue-600"
-              >
-                Forgot Password?
-              </motion.button>
-            </div> */}
-            <motion.button 
+            <h2 className="text-lg font-light font-sans mb-4">{step === 'email' ? 'LOGIN NOW' : 'ENTER OTP'}</h2>
+            {step === 'email' ? (
+              <div className="mb-4">
+                <label htmlFor="username" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Registered Email</label>
+                <motion.input
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  className={`w-full px-4 py-2 border ${errors.username && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Enter Email Address"
+                />
+                {errors.username && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
+              </div>
+            ) : (
+              <div className="mb-6">
+                <label className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter OTP</label>
+                <div className="flex justify-between">
+                  {otp.map((digit, index) => (
+                    <motion.input
+  key={index}
+  ref={(el) => {
+    otpRefs.current[index] = el; // Just assign without returning anything
+  }}
+  type="text"
+  maxLength={1} // maxLength should be a number
+  value={digit}
+  onChange={(e) => handleOtpChange(e.target.value, index)}
+  onKeyDown={(e) => handleKeyDown(e, index)}
+  className="w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+
+                  ))}
+                </div>
+                {errors.otp && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.otp}</p>}
+                <div className="flex items-center justify-between mt-4">
+                  <button
+                    type="button"
+                    onClick={handleResendOtp}
+                    className={`text-black focus:outline-none ${canResend && !loading.resendOtp ? '' : 'opacity-50 cursor-not-allowed'}`}
+                    disabled={!canResend || loading.resendOtp}
+                  >
+                    {loading.resendOtp ? 'Resending...' : 'Resend OTP'}
+                  </button>
+                  {!canResend && <span className="text-sm text-gray-500">Resend in {timer} seconds</span>}
+                </div>
+              </div>
+            )}
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              type="submit" 
-              className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${!isValid ? 'opacity-50 cursor-not-allowed' : ''}`}
+              type="submit"
+              className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${!isValid || loading.validateUsername || loading.validateOtp ? 'opacity-50 cursor-not-allowed' : ''}`}
+              disabled={loading.validateUsername || loading.validateOtp}
             >
-              Confirm 
+              {step === 'email' && loading.validateUsername ? 'Validating...' : step === 'otp' && loading.validateOtp ? 'Validating...' : 'Confirm'}
               <ArrowRight color="#ffffff" strokeWidth={1.25} />
             </motion.button>
           </form>
