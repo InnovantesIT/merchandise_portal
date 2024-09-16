@@ -102,7 +102,7 @@ const Products = () => {
   
     try {
       await axios.post(baseURL + "/api/cart", {
-        customer_id: customerId,
+        customer_id: customerId, // Ensure customer_id is included
         item_id: product.item_id,
         qty: 1,
         price_per_unit: product.rate,
@@ -147,6 +147,7 @@ const Products = () => {
       showToast("Failed to add item to cart.", "error");
     }
   };
+  
   
   const showToast = (message: string, type: "success" | "error") => {
     const position: ToastPosition = "top-right";

@@ -90,9 +90,7 @@ const formatDate = (dateString: string) => {
   return `${day}${suffix(day)} ${new Intl.DateTimeFormat('en-GB', options).format(date)}`;
 };
 
-  if (loading) {
-    return <div>Loading...</div>;
-  }
+ 
 
   if (error) {
     return <div>{error}</div>;

@@ -15,13 +15,13 @@ interface Product {
 
 interface CardProps {
   product: Product;
-  onAddToCart: (product: Product) => void;
+  onAddToCart: (product: Product, customerId: string) => void;
   auth: string;
 }
 
 const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [quantity, setQuantity] = useState(product.quantity);
-  const [imageContent, setImageContent] = useState("");
+  const [imageContent, setImageContent] = useState('');
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const router = useRouter();
 
@@ -32,6 +32,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
       console.log('Fetched Image:', image); // Debugging log
     } catch (error) {
       console.error('Failed to fetch image:', error);
+      setImageContent('img/defaultcard.jpg'); // Default image on error
     }
   };
 
@@ -39,15 +40,21 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
     fetchProductImage();
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
-  }, [product, auth]); // Include dependencies to trigger re-fetch on prop change
+  }, [product, auth]); // Proper dependencies to re-run on prop changes
 
   const handleCartClick = () => {
+    const customerId = localStorage.getItem('customer_id');
+    if (!customerId) {
+      console.error('Customer ID not found in localStorage.');
+      return; // Exit if customer ID is not found
+    }
+
     if (isAddedToCart) {
       router.push('/cart');
     } else {
       setQuantity(1);
       setIsAddedToCart(true);
-      onAddToCart({ ...product, quantity: 1 });
+      onAddToCart({ ...product, quantity: 1 }, customerId);
     }
   };
 
@@ -107,7 +114,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   );
 };
 
-const CartButton = ({ isAddedToCart, handleCartClick, isMobile }: any) => (
+const CartButton = ({ isAddedToCart, handleCartClick, isMobile }: { isAddedToCart: boolean; handleCartClick: () => void; isMobile: boolean }) => (
   <AnimatePresence>
     <motion.button
       key={isAddedToCart ? 'added' : 'add'}

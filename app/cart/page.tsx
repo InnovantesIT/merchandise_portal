@@ -40,22 +40,31 @@ const CartPage: React.FC = () => {
 
   // Calculate today's date in 'YYYY-MM-DD' format
   const today = new Date().toISOString().split('T')[0];
-
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (!token) {
-      router.push('/');
+    const storedCustomerId = localStorage.getItem('customer_id');
+  
+    if (!token || !storedCustomerId) {
+      router.push('/'); // Redirect if no token or customer ID
       return;
     }
-
-    const storedCustomerId = localStorage.getItem('customer_id');
-    if (storedCustomerId) {
-      setCustomerId(storedCustomerId);
-    }
-
-    fetchCartItems();
+  
+    setCustomerId(storedCustomerId);
   }, [router]);
-
+  
+  useEffect(() => {
+    if (customerId) {
+      fetchCartItems();
+    }
+  }, [customerId]);
+  
+  
+  useEffect(() => {
+    if (customerId) {
+      fetchCartItems();
+    }
+  }, [customerId]);
+  
   const fetchCartItems = async () => {
     try {
       const response = await axios.get(baseURL + '/api/cart', {
@@ -67,6 +76,8 @@ const CartPage: React.FC = () => {
       console.error('Error fetching cart items:', error);
     }
   };
+  
+  
   
   const handleUpdateQuantity = async (product: Product, change: number) => {
     const newQuantity = product.qty + change;
@@ -91,7 +102,7 @@ const CartPage: React.FC = () => {
       handleRemoveFromCart(product);
     }
   };
-
+  
   const handleRemoveFromCart = async (product: Product) => {
     try {
       const response = await axios.delete(baseURL + `/api/cart`, { 
@@ -107,6 +118,7 @@ const CartPage: React.FC = () => {
       setErrorMessage('Failed to remove item from cart.');
     }
   };
+  
 
   const handlePaymentSubmit = async (event: React.FormEvent) => {
     event.preventDefault();

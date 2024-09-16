@@ -113,12 +113,14 @@ export default function Login() {
           });
   
           if (response.status === 200) {
-            const { token, name, customer_id } = response.data;
+            const { token, name, customer_id,role } = response.data;
             if (typeof window !== 'undefined') {
               localStorage.setItem('token', token);
               localStorage.setItem('username', username);
               localStorage.setItem('name', name);
               localStorage.setItem('customer_id', customer_id);
+              localStorage.setItem('role', role);
+
             }
             router.push('/products'); // Redirect to products page
           }
@@ -277,16 +279,21 @@ export default function Login() {
                 </div>
                 {errors.otp && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.otp}</p>}
                 <div className="flex items-center justify-between mt-4">
-                  <button
-                    type="button"
-                    onClick={handleResendOtp}
-                    className={`text-black focus:outline-none ${canResend && !loading.resendOtp ? '' : 'opacity-50 cursor-not-allowed'}`}
-                    disabled={!canResend || loading.resendOtp}
-                  >
-                    {loading.resendOtp ? 'Resending...' : 'Resend OTP'}
-                  </button>
-                  {!canResend && <span className="text-sm text-gray-500">Resend in {timer} seconds</span>}
-                </div>
+  <button
+    type="button"
+    onClick={handleResendOtp}
+    className={`text-black focus:outline-none ${canResend && !loading.resendOtp ? '' : 'opacity-50 cursor-not-allowed'}`}
+    disabled={!canResend || loading.resendOtp}
+  >
+    {loading.resendOtp ? 'Resending...' : 'Resend OTP'}
+  </button>
+  {!canResend && (
+    <span className="text-sm text-gray-500">
+      Resend in {Math.floor(timer / 60)}:{String(timer % 60).padStart(2, '0')} seconds
+    </span>
+  )}
+</div>
+
               </div>
             )}
             <motion.button

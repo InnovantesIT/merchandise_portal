@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Menu, X, LogOut, UserCircle, LifeBuoy, House, Package, ShoppingCart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
 
 interface HeaderProps {
   cartItemCount: number;
@@ -15,6 +14,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [username, setUsername] = useState('');
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const [role, setRole] = useState('');
   const router = useRouter();
 
   const handleNavigation = () => {
@@ -34,6 +34,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
 
   const confirmLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('role'); // Remove role on logout
     setShowLogoutAlert(false);
 
     setTimeout(() => {
@@ -61,10 +62,19 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
 
   useEffect(() => {
     const storedUsername = localStorage.getItem('username');
+    const storedRole = localStorage.getItem('role');
     if (storedUsername) {
       setUsername(storedUsername);
     }
-  }, []);
+    if (storedRole) {
+      setRole(storedRole);
+
+      // Redirect OEM users to Dealer Orders page as homepage
+      if (storedRole === 'oem' && window.location.pathname !== '/dealer-orders') {
+        router.push('/dealer-orders');
+      }
+    }
+  }, [router]);
 
   // Disable scrolling when the drawer or logout alert is open
   useEffect(() => {
@@ -81,17 +91,18 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   return (
     <header className="bg-black text-white sm:p-0 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px] sm:sticky sm:top-0 z-[1000]">
       <div className="flex justify-between items-center w-full sm:w-auto sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
-        <Link href="/products" className="block">
-          <div className="relative w-full h-12 sm:h-16">
+        {/* Conditional link for logo based on role */}
+        <Link href={role === 'oem' ? '/dealer-orders' : '/products'} className="block">
+          <div className="relative w-full h-12 sm:h-16 cursor-pointer">
             <img
               src="/img/headerlogo.png"
               alt="Logo"
-              className="hidden sm:block cursor-pointer mt-4"
+              className="hidden sm:block mt-4"
             />
             <img
               src="/img/mobheaderlogo.png"
               alt="Logo"
-              className="block sm:hidden ml-2 cursor-pointer mt-4"
+              className="block sm:hidden ml-2 mt-4"
             />
           </div>
         </Link>
@@ -107,7 +118,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
       {/* Desktop Navigation */}
       <div className="hidden sm:flex justify-center sm:ml-auto sm:justify-end w-full sm:mt-10 mt-0 text-xl">
         <div className="flex flex-row space-x-6 sm:mr-7 mr-3">
-          {username !== 'oem@example.com' && (
+          {role !== 'oem' && (
             <>
               <Link href="/products">
                 <span
@@ -156,7 +167,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
             </>
           )}
 
-          {username === 'oem@example.com' && (
+          {role === 'oem' && (
             <Link href="/dealer-orders">
               <span
                 onClick={handleNavigation}
@@ -232,51 +243,71 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               </button>
             </div>
             <nav className="mt-10 gap-y-7 flex flex-col">
-              <Link href="/products">
-                <div className="flex gap-2">
-                  <House size={24} strokeWidth={2} />
-                  <span
-                    onClick={toggleDrawer}
-                    className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans ${
-                      activeLink === '/products' ? 'text-[#EFDF00]' : 'text-white'
-                    } hover:text-[#EFDF00] tracking-wide`}
-                  >
-                    Home
-                  </span>
-                </div>
-              </Link>
-              <Link href="/order-history">
-                <div className="flex gap-3">
-                  <Package />
-                  <span
-                    onClick={toggleDrawer}
-                    className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans ${
-                      activeLink === '/order-history' ? 'text-[#EFDF00]' : 'text-white'
-                    } hover:text-[#EFDF00] tracking-wide`}
-                  >
-                    Previous Orders
-                  </span>
-                </div>
-              </Link>
-
-              <Link href="/cart">
-                <div className="flex gap-3">
-                  <ShoppingCart />
-                  <span
-                    onClick={toggleDrawer}
-                    className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans w-full ${
-                      activeLink === '/cart' ? 'text-[#EFDF00]' : 'text-white'
-                    } flex items-center hover:text-[#EFDF00] tracking-wide`}
-                  >
-                    Cart
-                    {cartItemCount > 0 && (
-                      <span className="ml-2 px-2 py-1 text-sm text-white bg-red-800 rounded-full font-sans">
-                        {cartItemCount}
+              {role !== 'oem' && (
+                <>
+                  <Link href="/products">
+                    <div className="flex gap-2">
+                      <House size={24} strokeWidth={2} />
+                      <span
+                        onClick={toggleDrawer}
+                        className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans ${
+                          activeLink === '/products' ? 'text-[#EFDF00]' : 'text-white'
+                        } hover:text-[#EFDF00] tracking-wide`}
+                      >
+                        Home
                       </span>
-                    )}
-                  </span>
-                </div>
-              </Link>
+                    </div>
+                  </Link>
+                  <Link href="/order-history">
+                    <div className="flex gap-3">
+                      <Package />
+                      <span
+                        onClick={toggleDrawer}
+                        className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans ${
+                          activeLink === '/order-history' ? 'text-[#EFDF00]' : 'text-white'
+                        } hover:text-[#EFDF00] tracking-wide`}
+                      >
+                        Previous Orders
+                      </span>
+                    </div>
+                  </Link>
+
+                  <Link href="/cart">
+                    <div className="flex gap-3">
+                      <ShoppingCart />
+                      <span
+                        onClick={toggleDrawer}
+                        className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans w-full ${
+                          activeLink === '/cart' ? 'text-[#EFDF00]' : 'text-white'
+                        } flex items-center hover:text-[#EFDF00] tracking-wide`}
+                      >
+                        Cart
+                        {cartItemCount > 0 && (
+                          <span className="ml-2 px-2 py-1 text-sm text-white bg-red-800 rounded-full font-sans">
+                            {cartItemCount}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                  </Link>
+                </>
+              )}
+
+              {role === 'oem' && (
+                <Link href="/dealer-orders">
+                  <div className="flex gap-3">
+                    <House />
+                    <span
+                      onClick={toggleDrawer}
+                      className={`block text-xl cursor-pointer transition duration-300 ease-in-out font-sans ${
+                        activeLink === '/dealer-orders' ? 'text-[#EFDF00]' : 'text-white'
+                      } hover:text-[#EFDF00] tracking-wide`}
+                    >
+                      Dealer Orders
+                    </span>
+                  </div>
+                </Link>
+              )}
 
               {/* Support and Logout for mobile */}
               {!showLogoutAlert && (

@@ -16,7 +16,7 @@ function ProfilePage() {
     const token = localStorage.getItem('token');
     if (!token) {
       // Redirect to home page if no token is found
-      // router.push('/');
+      router.push('/');
     } else {
       // Fetch user details from local storage
       const storedEmail = localStorage.getItem('username');
