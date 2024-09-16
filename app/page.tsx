@@ -167,7 +167,7 @@ export default function Login() {
           <form onSubmit={handleSubmit}>
             <h2 className="text-lg font-light font-sans mb-4">LOGIN NOW</h2>
             <div className="mb-4">
-              <label htmlFor="username" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Login ID</label>
+              <label htmlFor="username" className="block text-sm font-medium font-sans text-gray-700 mb-2">Enter Registered Email</label>
               <motion.input 
                 whileFocus={{ scale: 1.02 }}
                 transition={{ duration: 0.2 }}
@@ -177,7 +177,7 @@ export default function Login() {
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
                 className={`w-full px-4 py-2 border ${errors.username && hasSubmitted ? 'border-red-500' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`} 
-                placeholder="Enter Login ID"
+                placeholder="Enter Email Address"
               />
               {errors.username && hasSubmitted && <p className="text-red-500 text-sm mt-1">{errors.username}</p>}
             </div>

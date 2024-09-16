@@ -6,14 +6,12 @@ import Header from '@/app/components/header';
 import { motion } from "framer-motion";
 import { History } from 'lucide-react';
 
-// Modal component to display order items
-// Updated OrderDetailsModal component to beautify UI and add item subtotal
-const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
+const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }: any) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+      <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 max-w-xs md:max-w-lg relative">
         <h2 className="text-lg font-semibold mb-4">Order Details</h2>
         <button
           className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none"
@@ -21,19 +19,34 @@ const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
         >
           ✕
         </button>
-        {Array.isArray(line_items) && line_items.map((item, index) => (
-          <div key={index} className="flex items-start mb-4 space-x-4 border-b pb-4 last:border-none">
-           
-            <div className="flex-1">
-              <h4 className="font-semibold text-base text-gray-800">{item.name}</h4>
-              <p className="text-gray-600">Quantity: {item.quantity}</p>
-              <p className="text-gray-600">Rate: ₹ {parseFloat(item.rate).toFixed(2)}</p>
-              <p className="font-semibold text-gray-800">
-                Subtotal: ₹ {(parseFloat(item.rate) * item.quantity).toFixed(2)}
-              </p>
-            </div>
+        {Array.isArray(line_items) && line_items.length > 0 ? (
+          <div className="overflow-x-auto md:overflow-x-hidden">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/2 md:w-auto">Item Name</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 md:w-auto">Quantity</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 md:w-auto">Rate</th>
+                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 md:w-auto">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {line_items.map((item, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-2 text-sm text-gray-800 max-w-xs md:max-w-sm lg:max-w-md overflow-hidden overflow-ellipsis whitespace-nowrap">{item.name}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600 text-nowrap">{item.quantity}</td>
+                    <td className="px-4 py-2 text-sm text-gray-600 text-nowrap">₹ {parseFloat(item.rate).toFixed(2)}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800 text-nowrap">
+                      ₹ {(parseFloat(item.rate) * item.quantity).toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        ))}
+        ) : (
+          <p className="text-gray-600">No items to display.</p>
+        )}
         <div className="mt-4 flex justify-end">
           <button
             className="bg-black text-white py-2 px-4 rounded transition duration-300"
@@ -47,20 +60,20 @@ const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }:any) => {
   );
 };
 
-
 const OrderHistory = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLineItems, setSelectedLineItems] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const fetchOrderStatus = async () => {
     try {
       const response = await axios.get(baseURL + "/get-sales-order");
-      console.log(response);
-      setOrders(response.data.salesorders); // Ensure this matches your API structure
+      setOrders(response.data.salesorders);
     } catch (error) {
       setError("Failed to fetch order status");
       console.error("Error fetching order status:", error);
@@ -73,16 +86,16 @@ const OrderHistory = () => {
     fetchOrderStatus();
   }, []);
 
-  const handleViewDetails = async (salesOrderId:any) => {
-   
+  const handleViewDetails = async (salesOrderId: any) => {
     try {
-      const response = await axios.get(`${baseURL}/api/sales-order-details`,{
+      const response = await axios.get(`${baseURL}/api/sales-order-details`, {
         params: {
-          salesorder_id:salesOrderId
-      }});
-      
+          salesorder_id: salesOrderId
+        }
+      });
+
       if (response.status === 200) {
-        setSelectedLineItems(response.data.salesorder.line_items); 
+        setSelectedLineItems(response.data.salesorder.line_items);
         setIsModalOpen(true);
       } else {
         setError("Failed to fetch sales order details");
@@ -93,19 +106,26 @@ const OrderHistory = () => {
     }
   };
 
-  const renderProgressLine = (status:any) => {
+  const renderProgressLine = (status: any) => {
     const steps = ["Order Placed", "Order Confirmation", "Dispatched"];
-    const statusIndex = 0; // Replace with logic to calculate the current status index
+
+    const statusIndexMap: { [key: string]: number } = {
+      draft: 0,
+      confirmed: 1,
+      fulfilled: 2,
+    };
+
+    const statusIndex = statusIndexMap[status] || 0;
 
     return (
-      <div className="flex flex-col items-end w-full mt-4 sm:mt-0">
-        <div className="flex items-center justify-between w-full sm:w-1/2 relative mr-0 sm:mr-5">
+      <div className="flex flex-col items-end w-full mt-4 md:mt-0">
+        <div className="flex items-center justify-between w-full md:w-3/4 relative">
           <div className="absolute top-1/4 left-6 right-6 -translate-y-1/3">
             <div className="h-0.5 bg-gray-200 w-full" />
-            <div 
+            <div
               className="absolute left-0 top-0 h-0.5 bg-green-500 transition-all duration-500 ease-in-out"
               style={{
-                width: `${(statusIndex / (steps.length - 1)) * 100}%`
+                width: `${(statusIndex / (steps.length - 1)) * 100}%`,
               }}
             />
           </div>
@@ -117,13 +137,13 @@ const OrderHistory = () => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ duration: 0.5, delay: index * 0.2 }}
-                  className={`flex items-center justify-center w-6 h-6 sm:w-8 sm:h-8 rounded-full ${
+                  className={`flex items-center justify-center w-6 h-6 md:w-8 md:h-8 rounded-full ${
                     index <= statusIndex ? "bg-green-500" : "bg-gray-200"
                   }`}
                 >
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-white rounded-full" />
+                  <div className="w-3 h-3 md:w-4 md:h-4 bg-white rounded-full" />
                 </motion.div>
-                <span className="mt-2 text-xs sm:text-sm font-sans font-medium text-gray-700 text-center">
+                <span className="mt-2 text-xs md:text-sm font-sans font-medium text-gray-700 text-center">
                   {step}
                 </span>
               </div>
@@ -134,14 +154,14 @@ const OrderHistory = () => {
     );
   };
 
-  const formatDate = (dateString:any) => {
+  const formatDate = (dateString: any) => {
     const date = new Date(dateString);
     const day = date.getDate();
     const month = date.toLocaleString('default', { month: 'long' });
     const year = date.getFullYear();
 
-    const getOrdinalSuffix = (n:any) => {
-      if (n > 3 && n < 21) return 'th'; 
+    const getOrdinalSuffix = (n: any) => {
+      if (n > 3 && n < 21) return 'th';
       switch (n % 10) {
         case 1: return 'st';
         case 2: return 'nd';
@@ -151,6 +171,15 @@ const OrderHistory = () => {
     };
 
     return `${day}${getOrdinalSuffix(day)} ${month} ${year}`;
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentOrders = orders.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(orders.length / itemsPerPage);
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
@@ -166,40 +195,57 @@ const OrderHistory = () => {
 
       <main className="max-w-9xl mx-auto font-sans">
         <Header cartItemCount={0} />
-        <div className='py-8 sm:py-12 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8'>
+        <div className='py-8 md:py-12 mx-auto max-w-6xl px-4 md:px-6 lg:px-8'>
           <div className="flex gap-3">
             <History strokeWidth={1.25} />
-            <h1 className="text-xl font-semibold mb-8 sm:mb-12 text-gray-800">Order History</h1>
+            <h1 className="text-xl font-semibold mb-8 md:mb-12 text-gray-800">Order History</h1>
           </div>
           {loading ? (
             <p>Loading...</p>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : (
-            orders.map((order:any, index:any) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl shadow-lg mb-6 sm:mb-8 p-4 sm:p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
-                  <div className="w-full sm:w-auto mb-4 sm:mb-0">
-                    <p className="text-gray-500 text-sm">Order Number</p>
-                    <h3 className="text-xl  font-semibold text-gray-800 whitespace-nowrap">{order.salesorder_number}</h3>
-                  </div>
-                  {renderProgressLine(order.status)}
-                </div>
-                <p className="text-gray-600 mb-4 sm:mb-6">Order Date: {formatDate(order.date)}</p>
-                <button
-                  className="bg-black text-white py-2 px-4 rounded"
-                  onClick={() => handleViewDetails(order.salesorder_id)} 
+            <>
+              {currentOrders.map((order: any, index: any) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="bg-white rounded-xl shadow-lg mb-6 md:mb-8 p-4 md:p-8 border border-gray-100 hover:shadow-xl transition-shadow duration-300"
                 >
-                  View Details
-                </button>
-              </motion.div>
-            ))
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 md:mb-6">
+                    <div className="w-full md:w-auto mb-4 md:mb-0">
+                      <p className="text-gray-500 text-sm">Order Number</p>
+                      <h3 className="text-xl font-semibold text-gray-800 whitespace-nowrap">{order.salesorder_number}</h3>
+                    </div>
+                    {renderProgressLine(order.status)}
+                  </div>
+                  <p className="text-gray-600 mb-4 md:mb-6">Order Date: {formatDate(order.date)}</p>
+                  <p className="text-gray-600 mb-4 md:mb-6">Reference No: {order.reference_number}</p>
+                  <p className="text-gray-600 mb-4 md:mb-6">Payment Mode: {order.cf_payment_mode}</p>
+                  <button
+                    className="bg-black text-white py-2 px-4 rounded"
+                    onClick={() => handleViewDetails(order.salesorder_id)}
+                  >
+                    View Details
+                  </button>
+                </motion.div>
+              ))}
+
+              {/* Pagination Controls */}
+              <div className="flex justify-center mt-6">
+                {Array.from({ length: totalPages }, (_, index) => (
+                  <button
+                    key={index}
+                    className={`mx-1 px-3 py-1 rounded ${index + 1 === currentPage ? "bg-black text-white" : "bg-gray-200"}`}
+                    onClick={() => handlePageChange(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </main>
