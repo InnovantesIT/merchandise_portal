@@ -16,7 +16,8 @@ const config: Config = {
       },
 
       screens: {
-        'lg': '1280px',
+        'lg':'1024px',
+        'xl': '1280px',
       },
       fontFamily: {
         'manrope': 'Manrope',

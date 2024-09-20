@@ -34,7 +34,10 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
 
   const confirmLogout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('role'); // Remove role on logout
+    localStorage.removeItem('role'); 
+    localStorage.removeItem('customer_id')
+    localStorage.removeItem('first_name')
+    localStorage.removeItem('username')
     setShowLogoutAlert(false);
 
     setTimeout(() => {

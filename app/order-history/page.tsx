@@ -5,14 +5,15 @@ import Head from "next/head";
 import Header from '@/app/components/header';
 import { motion } from "framer-motion";
 import { History } from 'lucide-react';
-
 const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }: any) => {
   if (!isOpen) return null;
 
   return (
+  
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg p-4 md:p-6 max-w-xs md:max-w-lg relative">
         <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+        
         <button
           className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none"
           onClick={onClose}

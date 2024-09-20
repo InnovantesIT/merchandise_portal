@@ -3,6 +3,11 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Header from "@/app/components/header";
+import { jsPDF } from "jspdf";
+import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { AiOutlineFileExcel, AiOutlineFilePdf } from 'react-icons/ai';
+
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 interface Order {
@@ -66,36 +71,74 @@ const OrderTable = () => {
     fetchOrderStatus();
   }, []);
 
-  // Helper function to format date as "9th September 2024"
-const formatDate = (dateString: string) => {
-  if (!dateString) return 'N/A'; // Handle missing date
-  const date = new Date(dateString);
-  const day = date.getDate();
-  const suffix = (day: number) => {
-    if (day > 3 && day < 21) return 'th';
-    switch (day % 10) {
-      case 1:
-        return 'st';
-      case 2:
-        return 'nd';
-      case 3:
-        return 'rd';
-      default:
-        return 'th';
-    }
+  const formatDate = (dateString: string) => {
+    if (!dateString) return 'N/A'; // Handle missing date
+    const date = new Date(dateString);
+    const day = date.getDate();
+    const suffix = (day: number) => {
+      if (day > 3 && day < 21) return 'th';
+      switch (day % 10) {
+        case 1:
+          return 'st';
+        case 2:
+          return 'nd';
+        case 3:
+          return 'rd';
+        default:
+          return 'th';
+      }
+    };
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long' };
+    return `${day}${suffix(day)} ${new Intl.DateTimeFormat('en-GB', options).format(date)}`;
   };
 
-  // Corrected options object for Intl.DateTimeFormat
-  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long' };
-  return `${day}${suffix(day)} ${new Intl.DateTimeFormat('en-GB', options).format(date)}`;
-};
+  const exportToExcel = () => {
+    const worksheet = XLSX.utils.json_to_sheet(selectedLineItems.map(item => ({
+      Product: item.name,
+      Quantity: item.quantity,
+      TotalPrice: parseFloat(item.rate || '0') * (item.quantity || 0)
+    })));
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'OrderDetails');
+    XLSX.writeFile(workbook, 'OrderDetails.xlsx');
+  };
 
- 
-
-  if (error) {
-    return <div>{error}</div>;
-  }
-
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.text("Order Details", 20, 10);
+  
+    // Define the columns including 'Price' and ensure correct alignment
+    const columns = ["Product", "Quantity", "Price", "Total Price"];
+    const data = selectedLineItems.map((item) => [
+      item.name || 'N/A',
+      item.quantity ?? 'N/A',
+      `₹ ${(parseFloat(item.rate || '0')).toFixed(2)}`, // Price value
+      `₹ ${(parseFloat(item.rate || '0') * (item.quantity || 0)).toFixed(2)}`, // Total price calculation
+    ]);
+  
+    // Add table to the PDF
+    autoTable(doc, {
+      startY: 20,
+      head: [columns],
+      body: data,
+      styles: {
+        halign: 'center', // Center align by default for all cells
+        valign: 'middle',
+      },
+      headStyles: {
+        fillColor: [22, 160, 133], // Customize header color
+      },
+      columnStyles: {
+        0: { halign: 'left' },    // Align Product column to the left
+        1: { halign: 'center' },  // Align Quantity column to the center
+        2: { halign: 'right' },   // Align Price column to the right
+        3: { halign: 'right' },   // Align Total Price column to the right
+      },
+    });
+  
+    doc.save("OrderDetails.pdf");
+  };
+  
   return (
     <div className="min-h-screen bg-[#F6F8FD]">
       <Header cartItemCount={0} />
@@ -154,7 +197,13 @@ const formatDate = (dateString: string) => {
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
-              <h2 className="text-lg font-bold mb-4">Order Details</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold">Order Details</h2>
+                <div className="flex space-x-4">
+                  <AiOutlineFileExcel className="text-green-600 cursor-pointer" size={24} onClick={exportToExcel} />
+                  <AiOutlineFilePdf className="text-red-600 cursor-pointer" size={24} onClick={exportToPDF} />
+                </div>
+              </div>
               <table className="min-w-full bg-white">
                 <thead>
                   <tr>
