@@ -102,18 +102,18 @@ const Products = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       setIsLoading(true);
-
+    
       try {
         const token = retrieveToken();
         if (!token) throw new Error("Token is missing");
-        
+    
         const response = await axios.get(`${baseURL}/api/products`, {
           headers: {
             Authorization: `Bearer ${token}`,
             brand: 'renault',
           },
         });
-        
+    
         if (Array.isArray(response.data.items)) {
           setProducts(response.data.items);
         } else if (Array.isArray(response.data)) {
@@ -121,13 +121,25 @@ const Products = () => {
         } else {
           throw new Error("Unexpected response format");
         }
-      } catch (error) {
+      } catch (error:any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('customer_id');
+          localStorage.removeItem('first_name');
+          localStorage.removeItem('username');
+          
+          router.push('/');
+        }
+    
+        // Log and display error
         console.error("Error fetching products:", error);
         showToast("Failed to load products. Please try again later.", "error");
       } finally {
         setIsLoading(false);
       }
     };
+    
 
     fetchProducts();
   }, [baseURL]);
@@ -150,7 +162,17 @@ const Products = () => {
         } else {
           throw new Error("Unexpected response format for product categories");
         }
-      } catch (error) {
+      } catch (error:any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          // Clear user-related storage and redirect
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('customer_id');
+          localStorage.removeItem('first_name');
+          localStorage.removeItem('username');
+          
+          router.push('/');
+        }
         console.error("Error fetching product groups:", error);
         showToast("Failed to load product categories. Please try again later.", "error");
       }
@@ -198,6 +220,16 @@ const Products = () => {
   
       showToast(`${product.item_name} added to cart.`, "success");
     } catch (error: any) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        // Clear user-related storage and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('customer_id');
+        localStorage.removeItem('first_name');
+        localStorage.removeItem('username');
+        
+        router.push('/');
+      }
       console.error(
         "Error adding to cart:",
         error.response ? error.response.data : error.message
@@ -391,8 +423,7 @@ const Products = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="max-w-9xl mx-auto">
-      <Header cartItemCount={cartItems.reduce((total, item) => total + item.quantity, 0)} />
-
+      <Header cartItemCount={cartItems.length} />
         <ToastContainer />
         <motion.div
           initial={{ opacity: 0, y: -20 }}

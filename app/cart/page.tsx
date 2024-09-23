@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
+import { Smartphone, Calendar, Hash } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
 import { motion, AnimatePresence } from 'framer-motion';
 import Header from '@/app/components/header';
@@ -89,17 +90,17 @@ const CartItem: React.FC<{
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-100">
+              <th className="p-2 text-left">HSN Code</th>
               <th className="p-2 text-left">Unit Price</th>
               <th className="p-2 text-left">Tax (%)</th>
-              <th className="p-2 text-left">HSN Code</th>
               <th className="p-2 text-left">Subtotal</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td className="p-2">{product.hsn_or_sac}</td>
               <td className="p-2">₹{product.rate.toFixed(2)}</td>
               <td className="p-2">{product.tax_percentage}%</td>
-              <td className="p-2">{product.hsn_or_sac}</td>
               <td className="p-2">₹{product.sub_total.toFixed(2)}</td>
             </tr>
           </tbody>
@@ -109,97 +110,95 @@ const CartItem: React.FC<{
   );
 };
 
-const OrderSummaryTable = ({ cartItems }:any) => {
-  const calculateSubtotal = (price:any, qty:any) => price * qty;
-  const calculateTax = (subtotal:any, taxRate:any) => subtotal * (taxRate / 100);
-  const calculateTotal = (subtotal:any, tax:any) => subtotal + tax;
+const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) => {
+  const calculateSubtotal = (price: number, qty: number) => price * qty;
+  const calculateTax = (subtotal: number, taxRate: number) => subtotal * (taxRate / 100);
+  const calculateTotal = (subtotal: number, tax: number) => subtotal + tax;
 
-  const grandTotal = cartItems.reduce((acc:any, item:any) => {
+  const grandTotal = cartItems.reduce((acc, item) => {
     const subtotal = calculateSubtotal(item.rate, item.quantity);
     const tax = calculateTax(subtotal, item.tax_percentage);
     return acc + calculateTotal(subtotal, tax);
   }, 0);
 
   return (
-      <div className="p-4 sm:p-1 justify-center bg-white max-w-9xl">
-        <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse border border-gray-300 min-w-[640px]">
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border border-gray-300 p-2">Product Name</th>
-                <th className="border border-gray-300 p-2">HSN</th>
-                <th className="border border-gray-300 p-2">Qty</th>
-                <th className="border border-gray-300 p-2">Unit Price</th>
-                <th className="border border-gray-300 p-2">Subtotal</th>
-                <th className="border border-gray-300 p-2">Tax</th>
-                <th className="border border-gray-300 p-2">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {cartItems.map((item:any, index:any) => {
-                const subtotal = calculateSubtotal(item.rate, item.quantity);
-                const tax = calculateTax(subtotal, item.tax_percentage);
-                const total = calculateTotal(subtotal, tax);
-    
-                return (
-                  <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
-                    <td className="border border-gray-300 p-2 text-center">{item.item_name}</td>
-                    <td className="border border-gray-300 p-2 text-center">{item.hsn_or_sac}</td>
-                    <td className="border border-gray-300 p-2 text-center ">{item.quantity}</td>
-                    <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2 text-center">₹{subtotal.toFixed(2)}</td>
-                    <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
-                    <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td>
-                  </tr>
-                );
-              })}
-    
-              {/* Total Shipping charge row */}
-              <tr className="bg-gray-50">
-                <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
-                <td className="border border-gray-300 p-2 text-center"></td>
-                <td className="border border-gray-300 p-2 text-center">1</td>
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{cartItems.reduce((totalShipping:any, item:any) => totalShipping + (item.rate * item.quantity * 0.10), 0).toFixed(2)}
-                </td>
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{cartItems.reduce((totalShipping:any, item:any) => totalShipping + (item.rate * item.quantity * 0.10), 0).toFixed(2)}
-                </td>
-                <td className="border border-gray-300 p-2 text-center">18%</td>
-                
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{(cartItems.reduce((totalShipping:any, item:any) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18).toFixed(2)}
-                </td>
-              </tr>
-    
-              {/* Total Packaging charge row */}
-              <tr className="bg-white">
-                <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
-                <td className="border border-gray-300 p-2 text-center"></td>
-                <td className="border border-gray-300 p-2 text-center">1</td>
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{cartItems.reduce((totalPackaging:any, item:any) => totalPackaging + (item.rate * item.quantity * 0.15), 0).toFixed(2)}
-                </td>
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{cartItems.reduce((totalPackaging:any, item:any) => totalPackaging + (item.rate * item.quantity * 0.15), 0).toFixed(2)}
-                </td>
-                <td className="border border-gray-300 p-2 text-center">18%</td>
-                <td className="border border-gray-300 p-2 text-center">
-                  ₹{(cartItems.reduce((totalPackaging:any, item:any) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className="mt-4 text-right my-3">
-          <p className="text-xl font-bold">
-            Grand Total: <span className="text-2xl">₹{(grandTotal + cartItems.reduce((totalShipping:any, item:any) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging:any, item:any) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}</span>
-          </p>
-        </div>
+    <div className="p-4 sm:p-1 justify-center bg-white max-w-9xl">
+      <h2 className="text-2xl font-bold mb-4">Order Summary</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse border border-gray-300 min-w-[640px]">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border border-gray-300 p-2">Product Name</th>
+              <th className="border border-gray-300 p-2">HSN</th>
+              <th className="border border-gray-300 p-2">Qty</th>
+              <th className="border border-gray-300 p-2">Unit Price</th>
+              <th className="border border-gray-300 p-2">Subtotal</th>
+              <th className="border border-gray-300 p-2">Tax</th>
+              <th className="border border-gray-300 p-2">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {cartItems.map((item, index) => {
+              const subtotal = calculateSubtotal(item.rate, item.quantity);
+              const tax = calculateTax(subtotal, item.tax_percentage);
+              const total = calculateTotal(subtotal, tax);
+  
+              return (
+                <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
+                  <td className="border border-gray-300 p-2 text-center">{item.item_name}</td>
+                  <td className="border border-gray-300 p-2 text-center">{item.hsn_or_sac}</td>
+                  <td className="border border-gray-300 p-2 text-center ">{item.quantity}</td>
+                  <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
+                  <td className="border border-gray-300 p-2 text-center">₹{subtotal.toFixed(2)}</td>
+                  <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
+                  <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td>
+                </tr>
+              );
+            })}
+  
+            {/* Total Shipping charge row */}
+            <tr className="bg-gray-50">
+              <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
+              <td className="border border-gray-300 p-2 text-center"></td>
+              <td className="border border-gray-300 p-2 text-center">1</td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0).toFixed(2)}
+              </td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0).toFixed(2)}
+              </td>
+              <td className="border border-gray-300 p-2 text-center">18%</td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{(cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18).toFixed(2)}
+              </td>
+            </tr>
+  
+            {/* Total Packaging charge row */}
+            <tr className="bg-white">
+              <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
+              <td className="border border-gray-300 p-2 text-center"></td>
+              <td className="border border-gray-300 p-2 text-center">1</td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0).toFixed(2)}
+              </td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0).toFixed(2)}
+              </td>
+              <td className="border border-gray-300 p-2 text-center">18%</td>
+              <td className="border border-gray-300 p-2 text-center">
+                ₹{(cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-    );
-    
+      <div className="mt-4 text-right my-3">
+        <p className="text-xl font-bold">
+          Grand Total: <span className="text-2xl">₹{(grandTotal + cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}</span>
+        </p>
+      </div>
+    </div>
+  );
 };
 
 const CartPage: React.FC = () => {
@@ -207,12 +206,12 @@ const CartPage: React.FC = () => {
   const [canEditItems, setCanEditItems] = useState(true);
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
-
+  const [customerId, setCustomerId] = useState<string | null>(null);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
     mode: '',
     reference: '',
-    amount:'',
+    amount: '',
     date: '',
   });
   const [cartItems, setCartItems] = useState<Product[]>([]);
@@ -225,6 +224,10 @@ const CartPage: React.FC = () => {
       const encryptedToken = localStorage.getItem('token');
       if (encryptedToken) {
         return decrypt(encryptedToken);
+      }
+      const storedCustomerId = localStorage.getItem('customer_id');
+      if (storedCustomerId) {
+        setCustomerId(storedCustomerId);
       }
     }
     return null;
@@ -239,14 +242,23 @@ const CartPage: React.FC = () => {
 
     const fetchCartItems = async () => {
       try {
-        const response = await axios.get(baseURL + '/api/cart-by-user-id', {
+        const response = await axios.get(`${baseURL}/api/cart-by-user-id`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
         setCartItems(response.data.data);
         setShowPaymentDetails(response.data.data.length > 0);
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('customer_id');
+          localStorage.removeItem('first_name');
+          localStorage.removeItem('username');
+          
+          router.push('/');
+        }
         console.error('Error fetching cart items:', error);
         setErrorMessage('Failed to fetch cart items. Please try again.');
       }
@@ -256,7 +268,7 @@ const CartPage: React.FC = () => {
   }, [baseURL, router]);
 
   const today = new Date().toISOString().split('T')[0];
-
+  
   const calculateSubTotal = (rate: number, quantity: number, taxPercentage: number): number => {
     const subtotal = rate * quantity;
     const tax = subtotal * (taxPercentage / 100);
@@ -273,7 +285,7 @@ const CartPage: React.FC = () => {
     const newQuantity = product.quantity + change;
     if (newQuantity > 0) {
       try {
-        const response = await axios.post(baseURL + `/api/add-cart`, {
+        const response = await axios.post(`${baseURL}/api/add-cart`, {
           item_id: product.item_id,
           quantity: newQuantity,
         }, {
@@ -296,7 +308,16 @@ const CartPage: React.FC = () => {
             )
           );
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('role');
+          localStorage.removeItem('customer_id');
+          localStorage.removeItem('first_name');
+          localStorage.removeItem('username');
+          
+          router.push('/');
+        }
         console.error('Error updating quantity:', error);
         setErrorMessage('Failed to update item quantity.');
       }
@@ -312,7 +333,7 @@ const CartPage: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post(baseURL + `/api/add-cart`, { 
+      const response = await axios.post(`${baseURL}/api/add-cart`, { 
         item_id: product.item_id,
         quantity: 0,
       }, {
@@ -327,31 +348,118 @@ const CartPage: React.FC = () => {
         setCartItems(updatedCartItems);
         setShowPaymentDetails(updatedCartItems.length > 0);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('customer_id');
+        localStorage.removeItem('first_name');
+        localStorage.removeItem('username');
+        
+        router.push('/');
+      }
       console.error('Error removing from cart:', error);
       setErrorMessage('Failed to remove item from cart.');
     }
   };
 
-  
-
-  const paymentOptions = ['NEFT', 'RTGS', 'IMPS'];
+  const paymentOptions = ['NEFT', 'RTGS', 'IMPS', 'UPI'];
   const pageTitle = "Orders";
 
   const handleProceed = () => {
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty. Add items before proceeding.");
+      return;
+    }
     setShowOrderSummary(true);
+    setIsPaymentPlaced(true);
+    setErrorMessage(null);
   };
 
-  const handlePlaceOrder = (e: React.FormEvent) => {
+  const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty. Add items before placing an order.");
+      return;
+    }
+    // Validate payment details
+    if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
+      setErrorMessage("Please fill in all payment details.");
+      return;
+    }
     setOrderPlaced(true);
     setCanEditItems(false);
+    setErrorMessage(null);
+    const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
+    const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
+
+    const salesOrderData = {
+      salesorder_number: salesOrderNumber,
+      line_items: cartItems.map((item) => ({
+        item_id: item.item_id,
+        name: item.item_name,
+        quantity: item.quantity,
+        Amount: parseFloat(item.rate.toString()),
+      })),
+      amount: parseFloat(paymentDetails.amount.toString()),
+      reference_number: paymentDetails.reference,
+      payment_date: paymentDetails.date,
+      payment_mode: paymentDetails.mode
+    };
+
+    if (salesOrderData.line_items.length === 0) {
+      setErrorMessage('No items in the cart to place an order.');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${baseURL}/api/sales-order`, salesOrderData, {
+        headers: {
+          Authorization: `Bearer ${retrieveToken()}`,
+          brand: 'renault',
+
+        },
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        setOrderPlaced(true);
+        setCanEditItems(false);
+        setShowPaymentDetails(false);
+        setErrorMessage(null);
+
+        try {
+          await Promise.all(
+            cartItems.map(async (item) => {
+              try {
+                await handleRemoveFromCart(item);
+              } catch (deleteError) {
+                console.error(`Error removing item ${item.id} from cart:`, deleteError);
+                throw new Error(`Failed to remove item ${item.item_name} from cart.`);
+              }
+            })
+          );
+          setCartItems([]);
+        } catch (deleteAllError) {
+          console.error('Error clearing cart items:', deleteAllError);
+          setErrorMessage('Order placed but some items could not be removed from the cart. Please try again.');
+        }
+      } else {
+        setErrorMessage('Failed to place order. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error creating sales order:', error);
+      setErrorMessage('Failed to create sales order. Please try again.');
+    }
   };
 
   const handlePreviousOrdersClick = () => {
     router.push('/order-history');
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPaymentDetails((prev: any) => ({ ...prev, [name]: value }));
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -377,7 +485,7 @@ const CartPage: React.FC = () => {
             >
               <h2 className="text-3xl font-bold mb-4">Thank you for placing your order!</h2>
               <p className="text-xl mb-8">
-              We shall notify you by email when the order is confirmed by our backend team. You can also check the status of your orders from the {' '} 
+                We shall notify you by email when the order is confirmed by our backend team. You can also check the status of your orders from the {' '}
                 <Link href="/order-history">
                   <span 
                     className="font-bold text-blue-600 hover:underline cursor-pointer"
@@ -405,197 +513,213 @@ const CartPage: React.FC = () => {
                 </motion.div>
               )}
 
-
-          <div className="flex flex-col md:flex-row md:gap-8">
-            {!showOrderSummary && (
-              <div className="md:w-3/5 lg:w-2/3 pr-0">
-                <div className="bg-white mb-6">
-                  <div className="flex justify-between items-center p-4">
-                    <h2 className="text-md md:text-xl font-semibold font-sans">All Items</h2>
+              <div className="flex flex-col md:flex-row md:gap-8">
+                {!showOrderSummary && (
+                  <div className="md:w-3/5 lg:w-2/3 pr-0">
+                    <div className="bg-white mb-6">
+                      <div className="flex justify-between items-center p-4">
+                        <h2 className="text-md md:text-xl font-semibold font-sans">All Items</h2>
+                      </div>
+                      <AnimatePresence>
+                        {cartItems.length === 0 ? (
+                          <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            transition={{ duration: 0.3 }}
+                            className="text-center p-6 text-gray-500"
+                          >
+                            Your product cart is empty
+                          </motion.div>
+                        ) : (
+                          cartItems.map((product) => (
+                            <CartItem
+                              key={product.id}
+                              product={product}
+                              onRemove={handleRemoveFromCart}
+                              onUpdateQuantity={handleUpdateQuantity}
+                              canEditItems={canEditItems}
+                            />
+                          ))
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
-                  <AnimatePresence>
-                    {cartItems.length === 0 ? (
+                )}
+
+                {!showOrderSummary && (
+                  <div className="md:w-1/2 lg:w-1/3 mt-6 md:mt-0">
+                    <motion.div
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.5 }}
+                      className="bg-white rounded-lg shadow-lg border p-4 md:p-6 mb-4 md:mb-6"
+                    >
+                      <div className="flex gap-2 md:gap-3">
+                        <BsHandbag className="mt-1 font-semibold font-sans" />
+                        <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
+                      </div>
+                     
+                      <div className="flex justify-between items-center text-black font-semibold font-sans">
+                        <span>Subtotal:</span>
+                        <span className="text-xl md:text-2xl">
+                          ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      <button
+                        onClick={handleProceed}
+                        className={`mt-4 w-full py-2 px-4 rounded-md transition duration-300 ${
+                          cartItems.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black text-white'
+                        }`}
+                      >
+                        Proceed
+                      </button>
+                      
+                      {errorMessage && (
+                        <motion.p
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="text-red-500 text-sm mt-2"
+                        >
+                          {errorMessage}
+                        </motion.p>
+                      )}
+                    </motion.div>
+                  </div>
+                )}
+              </div>
+
+              {/* Order Summary Section */}
+              {showOrderSummary && (
+                <>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    <OrderSummaryTable cartItems={cartItems} />
+                  </motion.div>
+                  <AnimatePresence mode="wait">
+                    {showPaymentDetails && isPaymentPlaced && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -20 }}
                         transition={{ duration: 0.3 }}
-                        className="text-center p-6 text-gray-500"
+                        className="bg-[#F6F8FD] border rounded-lg shadow-lg p-6 md:p-8 mb-6"
                       >
-                        Your product cart is empty
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                          Add Payment Details
+                        </h2>
+                  
+                        <AnimatePresence mode="wait">
+                         <div className="mb-2 flex flex-col md:flex-row items-center md:items-start gap-8">
+                              <div className="sm:text-sm text-lg text-gray-600 sm:shadow-none flex-grow">
+                                <h3 className="font-semibold text-lg mb-3 text-black">Our Bank Details</h3>
+                                <span className="font-semibold">Topline Print Media</span>
+                                <p><span className="font-semibold">Bank:</span> HDFC Bank</p>
+                                <p><span className="font-semibold">Account No.:</span> 000000000000</p>
+                                <p><span className="font-semibold">IFSC:</span> HDFC0000000</p>
+                              </div>
+
+                              <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
+                                <img src="/img/QR.jpeg" className='w-40 h-40' alt="QR Code" />
+                              </div>
+                          </div>
+                        </AnimatePresence>
+                  
+                        <form onSubmit={handlePlaceOrder} className="space-y-6">
+                          <div className="space-y-2">
+                            <label htmlFor="paymentMode" className="block text-sm font-medium text-gray-700">Payment Mode</label>
+                            <div className="flex items-center">
+                              <Smartphone className="text-gray-400 mr-2" />
+                              <CustomDropdown
+                                options={paymentOptions}
+                                selectedOption={paymentDetails.mode}
+                                onOptionSelect={(option) => setPaymentDetails({ ...paymentDetails, mode: option })}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount</label>
+                            <div className="flex items-center">
+                              <CreditCard className="text-gray-400 mr-2" />
+                              <input
+                                type="text"
+                                id="amount"
+                                name="amount"
+                                placeholder="Enter Amount here"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                                value={paymentDetails.amount}
+                                onChange={handleInputChange}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            <label htmlFor="reference" className="block text-sm font-medium text-gray-700">Reference Number</label>
+                            <div className="flex items-center">
+                              <Hash className="text-gray-400 mr-2" />
+                              <input
+                                type="text"
+                                id="reference"
+                                name="reference"
+                                placeholder="Enter reference here"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                                value={paymentDetails.reference}
+                                onChange={handleInputChange}
+                              />
+                            </div>
+                          <div className="space-y-2"></div>
+              <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700">Payment Date</label>
+              <div className="flex items-center">
+                <Calendar className="text-gray-400 mr-2" />
+                <input
+                  type="date"
+                  id="paymentDate"
+                  name="date"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                  value={paymentDetails.date}
+                  max={today}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+
+            <AnimatePresence>
+              {errorMessage && (
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-500 text-sm"
+                >
+                  {errorMessage}
+                </motion.p>
+              )}
+            </AnimatePresence>
+            
+            <div className="flex justify-end">
+              <motion.button
+                type="submit"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-full sm:w-auto px-8 py-3 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out  focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
+              >
+                Place Order
+              </motion.button>
+            </div>
+          </form>
+
                       </motion.div>
-                    ) : (
-                      cartItems.map((product) => (
-                        <CartItem
-                          key={product.id}
-                          product={product}
-                          onRemove={handleRemoveFromCart}
-                          onUpdateQuantity={handleUpdateQuantity}
-                          canEditItems={canEditItems}
-                        />
-                      ))
                     )}
                   </AnimatePresence>
-                </div>
-              </div>
-            )}
-
-            {!showOrderSummary && (
-              <div className="md:w-1/2 lg:w-1/3 mt-6 md:mt-0">
-                <motion.div
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.5 }}
-                  className="bg-white rounded-lg shadow-lg border p-4 md:p-6 mb-4 md:mb-6"
-                >
-                  <div className="flex gap-2 md:gap-3">
-                    <BsHandbag className="mt-1 font-semibold font-sans" />
-                    <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
-                  </div>
-                 
-                  <div className="flex justify-between items-center text-black font-semibold font-sans">
-                    <span>Subtotal:</span>
-                    <span className="text-xl md:text-2xl">
-                      ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
-                    </span>
-                  </div>
-                  
-                  <button
-                    onClick={handleProceed}
-                    className="mt-4 w-full bg-black text-white py-2 px-4 rounded-md  transition duration-300"
-                  >
-                    Proceed
-                  </button>
-                </motion.div>
-              </div>
-            )}
-          </div>
-
-          {/* Order Summary Section */}
-          {showOrderSummary && (
-            <><motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <OrderSummaryTable cartItems={cartItems} />
-            </motion.div><AnimatePresence mode="wait">
-                {showPaymentDetails && (
-                  isPaymentPlaced ? (
-                    <motion.div
-                      key="payment-details"
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -20 }}
-                      transition={{ duration: 0.3 }}
-                      className="relative bg-white border rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6"
-                    >
-                      {/* <button
-                        onClick={handleEditPaymentDetails}
-                        className="absolute top-4 md:top-8 right-4 text-gray-600 hover:text-gray-800"
-                        disabled
-                      >
-                        <Edit3 size={18} />
-                      </button> */}
-
-                      <h2 className="text-md md:text-lg mb-4 md:mb-8 inline-flex gap-2 md:gap-3 items-center">
-                        <CreditCard size={20} />
-                        Payment Details
-                      </h2>
-                      <div className="mb-4 md:mb-6">
-                        <p className="text-black text-sm font-semibold font-sans">Payment Mode</p>
-                        <p className="text-[#36383C] text-sm">{paymentDetails.mode}</p>
-                      </div>
-                      <div className="mb-4 md:mb-6">
-                        <p className="text-black text-sm font-semibold font-sans">Amount</p>
-                        <p className="text-[#36383C] text-sm">{paymentDetails.reference}</p>
-                      </div>
-                      <div className="mb-4 md:mb-6">
-                        <p className="text-black text-sm font-semibold font-sans">Reference Number</p>
-                        <p className="text-[#36383C] text-sm">{paymentDetails.reference}</p>
-                      </div>
-                      <div className="mb-4 md:mb-6">
-                        <p className="text-black text-sm font-semibold font-sans">Payment Date</p>
-                        <p className="text-[#36383C] text-sm">{paymentDetails.date}</p>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <motion.div
-                    key="payment-form"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="bg-[#FAFBFF] border rounded-lg shadow-sm p-4 md:p-6 mb-4 md:mb-6"
-                  >
-                    <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Add Payment Details</h2>
-                    <form onSubmit={handlePlaceOrder}>
-                      <div className="mb-4">
-                        <label className="block text-sm font-sans text-gray-700 mb-2">Payment Mode</label>
-                        <CustomDropdown
-                          options={paymentOptions}
-                          selectedOption={paymentDetails.mode}
-                          onOptionSelect={(option) => setPaymentDetails({ ...paymentDetails, mode: option })}
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-sans text-gray-700 mb-2">Amount</label>
-                        <input
-                          type="text"
-                          placeholder="Enter Amount here"
-                          className="w-full p-2 border border-gray-300 rounded"
-                          value={paymentDetails.amount} // Ensure this is the correct state for amount
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, amount: e.target.value })}
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-sans text-gray-700 mb-2">Reference Number</label>
-                        <input
-                          type="text"
-                          placeholder="Enter reference here"
-                          className="w-full p-2 border border-gray-300 rounded"
-                          value={paymentDetails.reference}
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, reference: e.target.value })}
-                        />
-                      </div>
-                      <div className="mb-4">
-                        <label className="block text-sm font-sans text-gray-700 mb-2">Payment Date</label>
-                        <input
-                          type="date"
-                          className="w-full p-2 border border-gray-300 rounded"
-                          value={paymentDetails.date}
-                          max={today}
-                          onChange={(e) => setPaymentDetails({ ...paymentDetails, date: e.target.value })}
-                        />
-                      </div>
-                      {errorMessage && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          className="text-red-500 text-sm mb-4"
-                        >
-                          {errorMessage}
-                        </motion.p>
-                      )}
-                      <div className="flex justify-end">
-                        <motion.button
-                          type="submit"
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="w-full sm:w-60 bg-black text-white py-2 rounded-md transition-all duration-100 ease-in-out hover:bg-[#171b1d]"
-                        >
-                          Place Order
-                        </motion.button>
-                      </div>
-                    </form>
-                  </motion.div>
-                  
-                  )
-                )}
-              </AnimatePresence></>
-
-          )}
-          </>
+                </>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -603,5 +727,7 @@ const CartPage: React.FC = () => {
     </div>
   );
 };
-
 export default CartPage;
+
+
+

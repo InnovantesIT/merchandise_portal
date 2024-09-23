@@ -3,6 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Header from "@/app/components/header";
+import { useRouter } from 'next/navigation';
+import { decrypt } from '@/app/action/enc';
 import { jsPDF } from "jspdf";
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
@@ -32,13 +34,23 @@ const OrderTable = () => {
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchOrderStatus = async () => {
     try {
       const response = await axios.get(baseURL + "/get-sales-order");
       console.log(response);
       setOrders(response.data.salesorders || []);
-    } catch (error) {
+    } catch (error:any) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('customer_id');
+        localStorage.removeItem('first_name');
+        localStorage.removeItem('username');
+        
+        router.push('/');
+      }
       setError("Failed to fetch order status");
       console.error("Error fetching order status:", error);
     } finally {
