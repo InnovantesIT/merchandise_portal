@@ -4,7 +4,6 @@ const SECRET_KEY = process.env.ENCRYPTION_KEY || 'your-default-secret-key';
 
 export const encrypt = (text: string): string => {
   const ciphertext = CryptoJS.AES.encrypt(text, SECRET_KEY).toString();
-  console.log('Encrypted text:', ciphertext); // Log ciphertext for debugging
   return ciphertext;
 };
 

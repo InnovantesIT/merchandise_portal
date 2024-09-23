@@ -29,23 +29,9 @@ export default function Login() {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   useEffect(() => {
-    const fetchBackgroundColors = async () => {
-      try {
-        const response = await axios.get('https://api.example.com/background-colors');
-        setLeftBgColor(response.data.leftColor);
-        setRightBgColor(response.data.rightColor);
-      } catch (error) {
-        console.error('Failed to fetch background colors:', error);
-        setLeftBgColor('#000000');
-        setRightBgColor('#F6F8FD');
-      } finally {
-        setTimeout(() => setIsLoading(false), 2000);
-      }
-    };
+    setTimeout(() => setIsLoading(false), 2000);
 
-    fetchBackgroundColors();
-  }, []);
-
+  })
   const validate = useCallback(() => {
     let valid = true;
     const newErrors = { username: '', otp: '' };

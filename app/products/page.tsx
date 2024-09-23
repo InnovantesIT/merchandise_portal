@@ -298,7 +298,6 @@ const Products = () => {
     selectedFilters.size === 0 || selectedFilters.has(product.group_id)
   ).sort((a, b) => a.group_name.localeCompare(b.group_name));
 
-  const { addToCart, cartItemCount } = useCart();
 
   const pageTitle = selectedFilters.size
     ? `Products - ${Array.from(selectedFilters).map(groupId => 
@@ -525,15 +524,15 @@ const Products = () => {
               <div className="text-black text-lg font-sans m-1 mb-2 mx-auto lg:hidden flex gap-24">
                 Hi {firstName || "Guest"}. Welcome Back!
                 <Link href="/cart">
-                  <div className="relative">
-                    <ShoppingCart strokeWidth={1.25} className="relative z-10" />
-                    {cartItems.length > 0 && (
-                      <span className="absolute -top-4 -right-1.5 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 flex items-center justify-center">
-                        {cartItems.reduce((total, item) => total + item.quantity, 0)}
-                      </span>
-                    )}
-                  </div>
-                </Link>
+  <div className="relative">
+    <ShoppingCart strokeWidth={1.25} className="relative z-10" />
+    {cartItems.length > 0 && (
+      <span className="absolute -top-4 -right-1.5 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 flex items-center justify-center">
+        {cartItems.reduce((total, item) => total + item.quantity, 0)}
+      </span>
+    )}
+  </div>
+</Link>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
   {isLoading ? (
@@ -597,7 +596,10 @@ const Products = () => {
           </div>
         </div>
       </main>
+      {!isLoading && (
+
       <Footer />
+      )}
     </div>
   );
   

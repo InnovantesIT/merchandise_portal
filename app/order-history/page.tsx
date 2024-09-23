@@ -7,6 +7,7 @@ import Header from '@/app/components/header';
 import { motion } from "framer-motion";
 import { History } from 'lucide-react';
 import { decrypt } from '@/app/action/enc';
+import Loader from '@/app/components/loader'
 
 const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }: any) => {
   if (!isOpen) return null;
@@ -115,10 +116,23 @@ const OrderHistory = () => {
       },
     })
       setOrders(response.data);
-    } catch (error) {
-      setError("Failed to fetch order status");
-      console.error("Error fetching order status:", error);
-    } finally {
+    }
+    catch (error: any) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        // Clear user-related storage and redirect
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('customer_id');
+        localStorage.removeItem('first_name');
+        localStorage.removeItem('username');
+        
+        router.push('/');
+      } else {
+        console.error("Error fetching sales order details:", error);
+        setError("Failed to fetch sales order details");
+      }
+    }
+     finally {
       setLoading(false);
     }
   };
@@ -184,6 +198,8 @@ const OrderHistory = () => {
       confirmed: 1,
       fulfilled: 2,
     };
+    // console.log("Order Status:", status);
+
 
     const statusIndex = statusIndexMap[status] || 0;
 
@@ -272,7 +288,9 @@ const OrderHistory = () => {
             <h1 className="text-xl font-semibold mb-8 md:mb-12 text-gray-800">Order History</h1>
           </div>
           {loading ? (
-            <p>Loading...</p>
+            <div className="flex items-center justify-center h-full mx-auto">
+            <Loader  />
+            </div>
           ) : error ? (
             <p className="text-red-500">{error}</p>
           ) : (

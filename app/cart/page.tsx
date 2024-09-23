@@ -153,7 +153,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
                   <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
                   <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td>
                 </tr>
-              );
+              ); 
             })}
   
             {/* Total Shipping charge row */}
@@ -259,8 +259,6 @@ const CartPage: React.FC = () => {
           
           router.push('/');
         }
-        console.error('Error fetching cart items:', error);
-        setErrorMessage('Failed to fetch cart items. Please try again.');
       }
     };
 
