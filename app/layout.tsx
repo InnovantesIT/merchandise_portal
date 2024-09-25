@@ -2,7 +2,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/app/context/cartcontext";
 import "@fortawesome/fontawesome-free/css/all.min.css"; // Importing Font Awesome globally
 import AuthWrapper from "@/app/components/authwrapper"; // Adjust the path if needed
 
@@ -23,14 +22,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="description" content="Shop our exclusive merchandise!" />
       </head>
       <body>
-        <CartProvider>
           <AuthWrapper>
             <header>
               {/* Add your header content here if needed */}
             </header>
             {children}
           </AuthWrapper>
-        </CartProvider>
       </body>
     </html>
   );

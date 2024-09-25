@@ -1,7 +1,6 @@
 "use client"
 import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
-import { useCart } from "@/app/context/cartcontext";
 import ProductCard from "@/app/components/productcard";
 import Head from "next/head";
 import { ToastContainer, ToastPosition, toast } from "react-toastify";

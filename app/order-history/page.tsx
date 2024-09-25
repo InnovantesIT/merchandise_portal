@@ -9,14 +9,14 @@ import { History } from 'lucide-react';
 import { decrypt } from '@/app/action/enc';
 import Loader from '@/app/components/loader'
 
-const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }: any) => {
+const OrderDetailsModal = ({ isOpen, onClose, line_items = [], packages = [] }: any) => {
   if (!isOpen) return null;
 
 
   return (
   
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-  <div className="bg-white rounded-lg shadow-lg p-4 relative overflow-scroll max-w-full md:max-w-3xl mx-2 md:mx-0">
+  <div className="bg-white rounded-lg  sm:p-6 p-4 relative sm:overflow-hidden overflow-scroll max-w-full  mx-2 md:mx-0">
     <h2 className="text-lg font-semibold mb-4">Order Details</h2>
 
     <button
@@ -62,6 +62,34 @@ const OrderDetailsModal = ({ isOpen, onClose, line_items = [] }: any) => {
     ) : (
       <p className="text-gray-600">No items to display.</p>
     )}
+    {/* Shipment Details Table */}
+    {Array.isArray(packages) && packages.length > 0 ? (
+  <div className="overflow-x-auto mt-4  ">
+    <h3 className="text-lg font-semibold mb-3 ">Shipped Packages</h3>
+    <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
+      <thead className="bg-gray-100">
+        <tr >
+          <th className="px-4 py-2  text-xs font-medium text-gray-600 uppercase tracking-wider">Carrier</th>
+          <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Tracking Number</th>
+          <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Shipment Date</th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {packages.map((pkg, index) => (
+          <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
+            <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.carrier}</td>
+            <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || 'N/A'}</td>
+            <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_date}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+) : (
+  <p className="text-gray-600 mt-4 text-center">No shipped packages to display.</p>
+)}
+
+
 
     <div className="mt-4 flex justify-end">
       <button
@@ -87,6 +115,7 @@ const OrderHistory = () => {
   const router = useRouter(); 
   const itemsPerPage = 10;
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
+  const [shipmentDetails, setShipmentDetails] =  useState([]); // New state for shipment details
 
   const retrieveToken = () => {
     if (typeof window !== 'undefined') {
@@ -168,10 +197,13 @@ const OrderHistory = () => {
 
       if (response.status === 200) {
         setSelectedLineItems(response.data.line_items);
+        setShipmentDetails(response.data.packages); // Set ship
+
         setIsModalOpen(true);
       } else {
         setError("Failed to fetch sales order details");
       }
+
     } catch (error: any) {
       if (error.response?.status === 401 || error.response?.status === 403) {
         // Clear user-related storage and redirect
@@ -196,9 +228,9 @@ const OrderHistory = () => {
     const statusIndexMap: { [key: string]: number } = {
       draft: 0,
       confirmed: 1,
-      fulfilled: 2,
+      shipped: 2,
     };
-    // console.log("Order Status:", status);
+    console.log("Order Status:", status);
 
 
     const statusIndex = statusIndexMap[status] || 0;
@@ -308,7 +340,7 @@ const OrderHistory = () => {
                       <p className="text-gray-500 text-sm">Order Number</p>
                       <h3 className="text-xl font-semibold text-gray-800 whitespace-nowrap">{order.salesorder_number}</h3>
                     </div>
-                    {renderProgressLine(order.order_status)}
+                    {renderProgressLine(order.status)}
                   </div>
                   <p className="text-gray-600 mb-2 ">Order Date: {formatDate(order.date)}</p>
                   <p className="text-gray-600 mb-2 ">
@@ -327,8 +359,10 @@ Amount: ₹{order.cf_payment_details.split('-')[1]}
                   >
                     View Details
                   </button>
+                  
                 </motion.div>
               ))}
+              
 
               {/* Pagination Controls */}
               <div className="flex justify-center mt-6">
@@ -352,6 +386,7 @@ Amount: ₹{order.cf_payment_details.split('-')[1]}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         line_items={selectedLineItems}
+        packages= {shipmentDetails}
       />
     </div>
   );
