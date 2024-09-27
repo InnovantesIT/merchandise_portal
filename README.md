@@ -14,7 +14,7 @@ pnpm dev
 bun dev
 
 ```
-jkhjkl
+jkhjkljknbkjhbn
 djdl
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
