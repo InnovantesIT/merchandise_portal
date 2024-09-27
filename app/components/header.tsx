@@ -143,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                     activeLink === '/order-history' ? 'text-white' : 'text-gray-400'
                   }`}
                 >
-                  Previous Orders
+                  Order History
                   {activeLink === '/order-history' && (
                     <div className="absolute bottom-0 left-0 right-0 h-1 bg-[#EFDF00] rounded transition-all duration-300 ease-in-out"></div>
                   )}
@@ -270,7 +270,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                           activeLink === '/order-history' ? 'text-[#EFDF00]' : 'text-white'
                         } hover:text-[#EFDF00] tracking-wide`}
                       >
-                        Previous Orders
+                        Order History
                       </span>
                     </div>
                   </Link>

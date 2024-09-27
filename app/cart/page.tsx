@@ -10,7 +10,7 @@ import Header from '@/app/components/header';
 import Head from 'next/head';
 import CustomDropdown from '@/app/components/customdropdown';
 import { useRouter } from 'next/navigation';
-import Footer from '@/app/components/footer'
+import Footer from '@/app/components/footer';
 import { decrypt } from '@/app/action/enc';
 import Link from 'next/link';
 
@@ -34,7 +34,6 @@ const CartItem: React.FC<{
   onUpdateQuantity: (product: Product, change: number) => void;
   canEditItems: boolean;
 }> = ({ product, onRemove, onUpdateQuantity, canEditItems }) => {
-
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = parseInt(e.target.value, 10);
     if (!isNaN(value) && value >= 0) {
@@ -57,10 +56,10 @@ const CartItem: React.FC<{
       >
         <X size={18} />
       </button>
-      
+
       <div className="flex md:flex-row justify-between items-start md:items-center w-full mt-3">
         <h3 className="font-sans text-lg mb-4 md:mb-0">{product.item_name}</h3>
-        
+
         <div className="flex items-center border rounded-md">
           <button
             onClick={() => onUpdateQuantity(product, -1)}
@@ -85,7 +84,7 @@ const CartItem: React.FC<{
           </button>
         </div>
       </div>
-      
+
       <div className="mt-4 w-full overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -142,20 +141,20 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               const subtotal = calculateSubtotal(item.rate, item.quantity);
               const tax = calculateTax(subtotal, item.tax_percentage);
               const total = calculateTotal(subtotal, tax);
-  
+
               return (
                 <tr key={index} className={index % 2 === 0 ? 'bg-gray-50' : 'bg-white'}>
                   <td className="border border-gray-300 p-2 text-center">{item.item_name}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.hsn_or_sac}</td>
-                  <td className="border border-gray-300 p-2 text-center ">{item.quantity}</td>
+                  <td className="border border-gray-300 p-2 text-center">{item.quantity}</td>
                   <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">₹{subtotal.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
                   <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td>
                 </tr>
-              ); 
+              );
             })}
-  
+
             {/* Total Shipping charge row */}
             <tr className="bg-gray-50">
               <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
@@ -172,7 +171,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
                 ₹{(cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18).toFixed(2)}
               </td>
             </tr>
-  
+
             {/* Total Packaging charge row */}
             <tr className="bg-white">
               <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
@@ -215,6 +214,7 @@ const CartPage: React.FC = () => {
     date: '',
   });
   const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [grandTotal, setGrandTotal] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
@@ -256,7 +256,7 @@ const CartPage: React.FC = () => {
           localStorage.removeItem('customer_id');
           localStorage.removeItem('first_name');
           localStorage.removeItem('username');
-          
+
           router.push('/');
         }
       }
@@ -265,12 +265,38 @@ const CartPage: React.FC = () => {
     fetchCartItems();
   }, [baseURL, router]);
 
+  useEffect(() => {
+    // Calculate grand total whenever cartItems change
+    setGrandTotal(calculateGrandTotal());
+  }, [cartItems]);
+
   const today = new Date().toISOString().split('T')[0];
-  
+
   const calculateSubTotal = (rate: number, quantity: number, taxPercentage: number): number => {
     const subtotal = rate * quantity;
     const tax = subtotal * (taxPercentage / 100);
     return subtotal + tax;
+  };
+
+  const calculateSubtotal = (price: number, qty: number) => price * qty;
+  const calculateTax = (subtotal: number, taxRate: number) => subtotal * (taxRate / 100);
+  const calculateTotal = (subtotal: number, tax: number) => subtotal + tax;
+
+  const calculateGrandTotal = () => {
+    const subtotal = cartItems.reduce((acc, item) => acc + calculateSubtotal(item.rate, item.quantity), 0);
+    const tax = cartItems.reduce((acc, item) => {
+      const itemSubtotal = calculateSubtotal(item.rate, item.quantity);
+      return acc + calculateTax(itemSubtotal, item.tax_percentage);
+    }, 0);
+    const total = subtotal + tax;
+
+    const totalShipping = cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0);
+    const totalShippingWithTax = totalShipping * 1.18;
+
+    const totalPackaging = cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0);
+    const totalPackagingWithTax = totalPackaging * 1.18;
+
+    return total + totalShippingWithTax + totalPackagingWithTax;
   };
 
   const handleUpdateQuantity = async (product: Product, change: number) => {
@@ -292,16 +318,16 @@ const CartPage: React.FC = () => {
             brand: 'renault',
           },
         });
-        
+
         if (response.status === 200) {
           setCartItems((prevItems) =>
             prevItems.map((item) =>
-              item.id === product.id 
-                ? { 
-                    ...item, 
+              item.id === product.id
+                ? {
+                    ...item,
                     quantity: newQuantity,
-                    sub_total: calculateSubTotal(item.rate, newQuantity, item.tax_percentage)
-                  } 
+                    sub_total: calculateSubTotal(item.rate, newQuantity, item.tax_percentage),
+                  }
                 : item
             )
           );
@@ -313,7 +339,7 @@ const CartPage: React.FC = () => {
           localStorage.removeItem('customer_id');
           localStorage.removeItem('first_name');
           localStorage.removeItem('username');
-          
+
           router.push('/');
         }
         console.error('Error updating quantity:', error);
@@ -331,7 +357,7 @@ const CartPage: React.FC = () => {
       return;
     }
     try {
-      const response = await axios.post(`${baseURL}/api/add-cart`, { 
+      const response = await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
         quantity: 0,
       }, {
@@ -340,7 +366,7 @@ const CartPage: React.FC = () => {
           brand: 'renault',
         },
       });
-   
+
       if (response.status === 200) {
         const updatedCartItems = cartItems.filter((item) => item.id !== product.id);
         setCartItems(updatedCartItems);
@@ -353,7 +379,7 @@ const CartPage: React.FC = () => {
         localStorage.removeItem('customer_id');
         localStorage.removeItem('first_name');
         localStorage.removeItem('username');
-        
+
         router.push('/');
       }
       console.error('Error removing from cart:', error);
@@ -376,15 +402,31 @@ const CartPage: React.FC = () => {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+  
     if (cartItems.length === 0) {
       setErrorMessage("Your cart is empty. Add items before placing an order.");
       return;
     }
+  
     // Validate payment details
     if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
       setErrorMessage("Please fill in all payment details.");
       return;
     }
+  
+    // Parse entered amount as a float and compare with grand total
+    const enteredAmount = parseFloat(paymentDetails.amount);
+  
+    // Check if entered amount is less than the grand total
+    if (enteredAmount < grandTotal) {
+      setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}.`);
+      return;
+    }
+  
+    // Clear the error message if the amount is valid
+    setErrorMessage('');
+  
+    
     setOrderPlaced(true);
     setCanEditItems(false);
     setErrorMessage(null);
@@ -402,7 +444,7 @@ const CartPage: React.FC = () => {
       amount: parseFloat(paymentDetails.amount.toString()),
       reference_number: paymentDetails.reference,
       payment_date: paymentDetails.date,
-      payment_mode: paymentDetails.mode
+      payment_mode: paymentDetails.mode,
     };
 
     if (salesOrderData.line_items.length === 0) {
@@ -415,7 +457,6 @@ const CartPage: React.FC = () => {
         headers: {
           Authorization: `Bearer ${retrieveToken()}`,
           brand: 'renault',
-
         },
       });
 
@@ -483,13 +524,13 @@ const CartPage: React.FC = () => {
             >
               <h2 className="text-3xl font-bold mb-4">Thank you for placing your order!</h2>
               <p className="text-xl mb-8">
-                We shall notify you by email when the order is confirmed by our backend team. You can also check the status of your orders from the {' '}
+                We shall notify you by email when the order is confirmed by our backend team. You can also check the status of your orders from the{' '}
                 <Link href="/order-history">
-                  <span 
+                  <span
                     className="font-bold text-blue-600 hover:underline cursor-pointer"
                     onClick={handlePreviousOrdersClick}
                   >
-                    Previous Orders
+                    Order History
                   </span>
                 </Link>{' '}
                 section.
@@ -557,14 +598,14 @@ const CartPage: React.FC = () => {
                         <BsHandbag className="mt-1 font-semibold font-sans" />
                         <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
                       </div>
-                     
+
                       <div className="flex justify-between items-center text-black font-semibold font-sans">
                         <span>Subtotal:</span>
                         <span className="text-xl md:text-2xl">
                           ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
                         </span>
                       </div>
-                      
+
                       <button
                         onClick={handleProceed}
                         className={`mt-4 w-full py-2 px-4 rounded-md transition duration-300 ${
@@ -573,7 +614,7 @@ const CartPage: React.FC = () => {
                       >
                         Proceed
                       </button>
-                      
+
                       {errorMessage && (
                         <motion.p
                           initial={{ opacity: 0 }}
@@ -611,23 +652,25 @@ const CartPage: React.FC = () => {
                         <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
                           Add Payment Details
                         </h2>
-                  
-                        <AnimatePresence mode="wait">
-                         <div className="mb-2 flex flex-col md:flex-row items-center md:items-start gap-8">
-                              <div className="sm:text-sm text-lg text-gray-600 sm:shadow-none flex-grow">
-                                <h3 className="font-semibold text-lg mb-3 text-black">Our Bank Details</h3>
-                                <span className="font-semibold">Topline Print Media</span>
-                                <p><span className="font-semibold">Bank:</span> HDFC Bank</p>
-                                <p><span className="font-semibold">Account No.:</span> 000000000000</p>
-                                <p><span className="font-semibold">IFSC:</span> HDFC0000000</p>
-                              </div>
 
-                              <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
-                                <img src="/img/QR.jpeg" className='w-40 h-40' alt="QR Code" />
-                              </div>
+                      
+
+                        <AnimatePresence mode="wait">
+                          <div className="mb-2 flex flex-col md:flex-row items-center md:items-start gap-8">
+                            <div className="sm:text-sm text-lg text-gray-600 sm:shadow-none flex-grow">
+                              <h3 className="font-semibold text-lg mb-3 text-black">Our Bank Details</h3>
+                              <span className="font-semibold">Topline Print Media</span>
+                              <p><span className="font-semibold">Bank:</span> HDFC Bank</p>
+                              <p><span className="font-semibold">Account No.:</span> 000000000000</p>
+                              <p><span className="font-semibold">IFSC:</span> HDFC0000000</p>
+                            </div>
+
+                            <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
+                              <img src="/img/QR.jpeg" className='w-40 h-40' alt="QR Code" />
+                            </div>
                           </div>
                         </AnimatePresence>
-                  
+
                         <form onSubmit={handlePlaceOrder} className="space-y-6">
                           <div className="space-y-2">
                             <label htmlFor="paymentMode" className="block text-sm font-medium text-gray-700">Payment Mode</label>
@@ -646,12 +689,13 @@ const CartPage: React.FC = () => {
                             <div className="flex items-center">
                               <CreditCard className="text-gray-400 mr-2" />
                               <input
-                                type="text"
+                                type="number"
                                 id="amount"
                                 name="amount"
                                 placeholder="Enter Amount here"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                                 value={paymentDetails.amount}
+                                step="0.01" // Allow the user to enter values with decimals
                                 onChange={handleInputChange}
                               />
                             </div>
@@ -671,47 +715,48 @@ const CartPage: React.FC = () => {
                                 onChange={handleInputChange}
                               />
                             </div>
-                          <div className="space-y-2"></div>
-              <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700">Payment Date</label>
-              <div className="flex items-center">
-                <Calendar className="text-gray-400 mr-2" />
-                <input
-                  type="date"
-                  id="paymentDate"
-                  name="date"
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                  value={paymentDetails.date}
-                  max={today}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </div>
+                          </div>
 
-            <AnimatePresence>
-              {errorMessage && (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="text-red-500 text-sm"
-                >
-                  {errorMessage}
-                </motion.p>
-              )}
-            </AnimatePresence>
-            
-            <div className="flex justify-end">
-              <motion.button
-                type="submit"
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="w-full sm:w-auto px-8 py-3 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out  focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
-              >
-                Place Order
-              </motion.button>
-            </div>
-          </form>
+                          <div className="space-y-2">
+                            <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700">Payment Date</label>
+                            <div className="flex items-center">
+                              <Calendar className="text-gray-400 mr-2" />
+                              <input
+                                type="date"
+                                id="paymentDate"
+                                name="date"
+                                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                                value={paymentDetails.date}
+                                max={today}
+                                onChange={handleInputChange}
+                              />
+                            </div>
+                          </div>
 
+                          <AnimatePresence>
+                            {errorMessage && (
+                              <motion.p
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                className="text-red-500 text-sm"
+                              >
+                                {errorMessage}
+                              </motion.p>
+                            )}
+                          </AnimatePresence>
+
+                          <div className="flex justify-end">
+                            <motion.button
+                              type="submit"
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="w-full sm:w-auto px-8 py-3 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out  focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
+                            >
+                              Place Order
+                            </motion.button>
+                          </div>
+                        </form>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -725,7 +770,5 @@ const CartPage: React.FC = () => {
     </div>
   );
 };
+
 export default CartPage;
-
-
-
