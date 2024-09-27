@@ -418,10 +418,11 @@ const CartPage: React.FC = () => {
     const enteredAmount = parseFloat(paymentDetails.amount);
   
     // Check if entered amount is less than the grand total
-    if (enteredAmount < grandTotal) {
-      setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}.`);
+    if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
+      setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
       return;
     }
+    
   
     // Clear the error message if the amount is valid
     setErrorMessage('');
@@ -695,7 +696,6 @@ const CartPage: React.FC = () => {
                                 placeholder="Enter Amount here"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                                 value={paymentDetails.amount}
-                                step="0.01" // Allow the user to enter values with decimals
                                 onChange={handleInputChange}
                               />
                             </div>

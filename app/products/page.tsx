@@ -52,7 +52,7 @@ const Products = () => {
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [firstName, setFirstName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(10); 
+  const [productsPerPage] = useState(50); 
   const [isLoading, setIsLoading] = useState(true);
 
 

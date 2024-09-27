@@ -6,7 +6,7 @@ import { ChevronRight, X } from 'lucide-react';
 interface Product {
   name: string;
   rate: number;
-  item_name:string;
+  item_name: string;
   image_name: string;
   image_path: string; // This may not be needed if you're not using it.
   quantity: number;
@@ -26,16 +26,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [quantity, setQuantity] = useState(product.quantity);
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.jpg');
   const router = useRouter();
 
   useEffect(() => {
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
-
-    // Cleanup if necessary
-    return () => {
-      // Any cleanup code if needed
-    };
+    setImageSrc(product.image_name || 'img/defaultcard.jpg');
   }, [product]);
 
   const handleCartClick = () => {
@@ -57,6 +54,10 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
 
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    setImageSrc('img/defaultcard.jpg');
+  };
+
   return (
     <motion.div
       className="card bg-white border border-gray-200 shadow-sm rounded-lg sm:p-4 p-6 max-w-2xl overflow-hidden hover:shadow-md transition-shadow duration-300 "
@@ -68,15 +69,11 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
       <div className="hidden sm:block">
         <div className="mb-4 cursor-pointer" onClick={openModal}>
           <img
-            src={product.image_name || 'img/defaultcard.jpg'}
+            src={imageSrc}
             alt={product.item_name}
             className="h-48 w-full object-contain"
             loading="lazy"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.onerror = null;
-              target.src = 'img/defaultcard.jpg';
-            }}
+            onError={handleImageError}
           />
         </div>
         <div className="text-center">
@@ -90,34 +87,25 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
 
       {/* Mobile Layout */}
       <div className="sm:hidden flex ml-6">
-  <div className="cursor-pointer flex-shrink-0" onClick={openModal}>
-    <img
-      src={product.image_name || 'img/defaultcard.jpg'}
-      alt={product.item_name}
-      className="h-24 w-24 object-contain mr-3"
-      loading="lazy"
-      onError={(e) => {
-        const target = e.target as HTMLImageElement;
-        target.onerror = null;
-        target.src = 'img/defaultcard.jpg';
-      }}
-    />
-  </div>
-  <div className="flex flex-col justify-center">
-    <h2 className="text-sm font-medium text-gray-800 mb-1 max-w-full overflow-hidden">
-      {product.item_name}
-    </h2>
-    <div className="flex items-center gap-3">
-      <p className="text-lg font-semibold text-gray-700">₹ {product.rate}</p>
-      <CartButton 
-        isAddedToCart={isAddedToCart} 
-        handleCartClick={handleCartClick} 
-        isMobile={true} 
-      />
-    </div>
-  </div>
-</div>
-
+        <div className="cursor-pointer flex-shrink-0" onClick={openModal}>
+          <img
+            src={imageSrc}
+            alt={product.item_name}
+            className="h-24 w-24 object-contain mr-3"
+            loading="lazy"
+            onError={handleImageError}
+          />
+        </div>
+        <div className="flex flex-col justify-center">
+          <h2 className="text-sm font-medium text-gray-800 mb-1 max-w-full overflow-hidden">
+            {product.item_name}
+          </h2>
+          <div className="flex items-center gap-3">
+            <p className="text-lg font-semibold text-gray-700">₹ {product.rate}</p>
+            <CartButton isAddedToCart={isAddedToCart} handleCartClick={handleCartClick} isMobile={true} />
+          </div>
+        </div>
+      </div>
 
       {/* Image Modal */}
       <AnimatePresence>
@@ -138,16 +126,17 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={product.image_name || 'img/defaultcard.jpg'}
+                src={imageSrc}
                 alt={product.name}
                 className="w-xl h-xl object-contain"
+                onError={handleImageError}
               />
               <button
                 onClick={closeModal}
                 className="absolute sm:top-2 sm:right-2 top-1 right-1 text-white bg-black bg-opacity-50 rounded-full sm:p-2 p-1 hover:bg-opacity-75 transition duration-300"
               >
-                <X className="block lg:hidden" size={20} /> 
-                <X className="hidden lg:block" size={24} /> 
+                <X className="block lg:hidden" size={20} />
+                <X className="hidden lg:block" size={24} />
               </button>
             </motion.div>
           </motion.div>
