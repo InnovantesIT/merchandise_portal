@@ -14,17 +14,25 @@ const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
 interface Order {
   salesorder_id: string;
-  dealer_name: string;
+  company_name: string;
   salesorder_number: string;
   date: string;
   status: string;
-  line_items?: LineItem[];
+  cf_payment_details: string;
 }
 
 interface LineItem {
   name: string;
   quantity: number;
   rate: string;
+  hsn_or_sac?: string;
+  tax_percentage?: string;
+}
+
+interface Package {
+  carrier: string;
+  tracking_number: string;
+  shipment_date: string;
 }
 
 const OrderTable = () => {
@@ -32,59 +40,85 @@ const OrderTable = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [highlightedOrderId, setHighlightedOrderId] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchOrderStatus = async () => {
-    try {
-      const response = await axios.get(baseURL + "/get-sales-order");
-      console.log(response);
-      setOrders(response.data.salesorders || []);
-    } catch (error:any) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('customer_id');
-        localStorage.removeItem('first_name');
-        localStorage.removeItem('username');
-        
-        router.push('/');
+  const retrieveToken = () => {
+    if (typeof window !== 'undefined') {
+      const encryptedToken = localStorage.getItem('token');
+      if (encryptedToken) {
+        return decrypt(encryptedToken);
       }
-      setError("Failed to fetch order status");
-      console.error("Error fetching order status:", error);
-    } finally {
-      setLoading(false);
     }
+    return null;
   };
+
+  useEffect(() => {
+    const token = retrieveToken();
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
+    const fetchOrderStatus = async () => {
+      try {
+        const response = await axios.get<Order[]>(`${baseURL}/api/get-sales-orders`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            brand: 'renault',
+          },
+        });
+        setOrders(response.data || []);
+      } catch (error: any) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
+          localStorage.clear();
+          router.push('/');
+        }
+        setError("Failed to fetch order status");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrderStatus();
+  }, [router]);
 
   const handleViewDetails = async (salesOrderId: string) => {
     try {
-      const response = await axios.get(`${baseURL}/api/sales-order-details`, {
+      const token = retrieveToken();
+      const response = await axios.get(`${baseURL}/api/get-sales-order-details`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         params: {
-          salesorder_id: salesOrderId,
+          id: salesOrderId,
         },
       });
 
       if (response.status === 200) {
-        setSelectedLineItems(response.data.salesorder?.line_items || []);
+        setSelectedLineItems(response.data.line_items || []);
+        setPackages(response.data.packages || []);
         setIsModalOpen(true);
         setHighlightedOrderId(salesOrderId);
       } else {
         setError("Failed to fetch sales order details");
       }
     } catch (error) {
-      console.error("Error fetching sales order details:", error);
       setError("Failed to fetch sales order details");
     }
   };
 
-  useEffect(() => {
-    fetchOrderStatus();
-  }, []);
+  const onClose = () => {
+    setIsModalOpen(false);
+    setHighlightedOrderId(null);
+    setSelectedLineItems([]);
+    setPackages([]);
+  };
 
   const formatDate = (dateString: string) => {
-    if (!dateString) return 'N/A'; // Handle missing date
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     const day = date.getDate();
     const suffix = (day: number) => {
@@ -118,39 +152,46 @@ const OrderTable = () => {
   const exportToPDF = () => {
     const doc = new jsPDF();
     doc.text("Order Details", 20, 10);
-  
-    // Define the columns including 'Price' and ensure correct alignment
+
     const columns = ["Product", "Quantity", "Price", "Total Price"];
     const data = selectedLineItems.map((item) => [
-      item.name || 'N/A',
-      item.quantity ?? 'N/A',
-      `₹ ${(parseFloat(item.rate || '0')).toFixed(2)}`, // Price value
-      `₹ ${(parseFloat(item.rate || '0') * (item.quantity || 0)).toFixed(2)}`, // Total price calculation
+        item.name || 'N/A',
+        item.quantity ?? 'N/A',
+        `₹ ${(parseFloat(item.rate || '0')).toFixed(2)}`,
+        `₹ ${(parseFloat(item.rate || '0') * (item.quantity || 0)).toFixed(2)}`,
     ]);
-  
-    // Add table to the PDF
+
+    const grandTotal = selectedLineItems.reduce((total, item) => {
+        return total + (parseFloat(item.rate || '0') * (item.quantity || 0));
+    }, 0);
+
+    data.push(['Grand Total', '', '', `₹ ${grandTotal.toFixed(2)}`]);
+
     autoTable(doc, {
       startY: 20,
       head: [columns],
       body: data,
-      styles: {
-        halign: 'center', // Center align by default for all cells
-        valign: 'middle',
-      },
-      headStyles: {
-        fillColor: [22, 160, 133], // Customize header color
-      },
+      styles: { halign: 'center', valign: 'middle' },
+      headStyles: { fillColor: [22, 160, 133] },
       columnStyles: {
-        0: { halign: 'left' },    // Align Product column to the left
-        1: { halign: 'center' },  // Align Quantity column to the center
-        2: { halign: 'right' },   // Align Price column to the right
-        3: { halign: 'right' },   // Align Total Price column to the right
+        0: { halign: 'left' },
+        1: { halign: 'center' },
+        2: { halign: 'center' },
+        3: { halign: 'center' },
       },
+      didParseCell: function(data) {
+        if (data.row.index === data.table.body.length - 1) {
+          data.cell.styles.fontStyle = 'bold';
+          if (data.column.index === 0) {
+            data.cell.styles.halign = 'right';
+          }
+        }
+      }
     });
-  
+
     doc.save("OrderDetails.pdf");
   };
-  
+
   return (
     <div className="min-h-screen bg-[#F6F8FD]">
       <Header cartItemCount={0} />
@@ -160,11 +201,8 @@ const OrderTable = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                {["Dealer Name", "Order No", "Order Placed Date", "Status"].map((header) => (
-                  <th
-                    key={header}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
+                {["Dealer Name", "Order No", "Order Placed Date","Amount", "Status"].map((header) => (
+                  <th key={header} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     {header}
                   </th>
                 ))}
@@ -174,29 +212,19 @@ const OrderTable = () => {
               {orders.map((order) => (
                 <tr key={order.salesorder_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    {order.dealer_name || 'Ambay Motors Pvt Ltd'}
+                    {order.company_name || 'Ambay Motors Pvt Ltd'}
                   </td>
-                  <td
-                    onClick={() => handleViewDetails(order.salesorder_id)}
-                    className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 cursor-pointer ${
-                      highlightedOrderId === order.salesorder_id
-                        ? 'bg-yellow-200 font-bold'
-                        : 'hover:bg-gray-100'
-                    }`}
-                  >
+                  <td onClick={() => handleViewDetails(order.salesorder_id)} className={`px-6 py-4 whitespace-nowrap text-sm text-gray-500 cursor-pointer ${highlightedOrderId === order.salesorder_id ? 'bg-yellow-200 font-bold' : 'hover:bg-gray-100'}`}>
                     {order.salesorder_number || 'N/A'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                     {formatDate(order.date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span
-                      className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${
-                        order.status === 'Dispatched'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
+                    <p className="text-gray-600">₹{order.cf_payment_details.split('-')[1]}</p>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${order.status === 'Dispatched' ? 'bg-blue-500 text-white' : 'bg-green-100 text-green-800'}`}>
                       {order.status === 'draft' ? 'Order Placed' : order.status || 'N/A'}
                     </span>
                   </td>
@@ -210,48 +238,70 @@ const OrderTable = () => {
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-bold">Order Details</h2>
-                <div className="flex space-x-4">
-                  <AiOutlineFileExcel className="text-green-600 cursor-pointer" size={24} onClick={exportToExcel} />
-                  <AiOutlineFilePdf className="text-red-600 cursor-pointer" size={24} onClick={exportToPDF} />
-                </div>
+                <h2 className="text-lg font-semibold mb-4">Order Details</h2>
+                <button className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none" onClick={onClose}>✕</button>
               </div>
-              <table className="min-w-full bg-white">
-                <thead>
-                  <tr>
-                    <th className="px-6 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Product
-                    </th>
-                    <th className="px-6 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Quantity
-                    </th>
-                    <th className="px-6 py-3 border-b-2 border-gray-200 bg-gray-50 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Total Price
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedLineItems.map((item, index) => (
-                    <tr key={index} className="hover:bg-gray-100">
-                      <td className="px-6 py-4 border-b border-gray-200 text-sm">
-                        {item.name || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 border-b border-gray-200 text-sm">
-                        {item.quantity ?? 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 border-b border-gray-200 text-sm">
-                        ₹ {(parseFloat(item.rate || '0') * (item.quantity || 0)).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="mt-4 px-4 py-2 bg-black text-white rounded"
-              >
-                Close
-              </button>
+
+              {selectedLineItems.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HSN</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                        <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedLineItems.map((item, index) => (
+                        <tr key={index}>
+                          <td className="px-2 py-2 text-sm text-gray-800">{item.name}</td>
+                          <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.hsn_or_sac}</td>
+                          <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.quantity}</td>
+                          <td className="px-2 py-2 text-sm text-gray-600">₹{parseFloat(item.rate || '0').toFixed(2)}</td>
+                          <td className="px-2 py-2 text-sm text-gray-800">₹{(parseFloat(item.rate || '0') * item.quantity).toFixed(2)}</td>
+                          <td className="px-2 py-2 text-sm text-gray-800">{item.tax_percentage}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-600">No items to display.</p>
+              )}
+
+              {packages.length > 0 ? (
+                <div className="overflow-x-auto mt-4">
+                  <h3 className="text-lg font-semibold mb-3">Shipped Packages</h3>
+                  <table className="min-w-full divide-y divide-gray-200 bg-white rounded-lg">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Carrier</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Tracking Number</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Shipment Date</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {packages.map((pkg, index) => (
+                        <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
+                          <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.carrier}</td>
+                          <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || 'N/A'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_date}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-gray-600 mt-4 text-center">No shipped packages to display.</p>
+              )}
+
+              <div className="mt-4 flex justify-end">
+                <button className="bg-black text-white py-2 px-4 rounded transition duration-300" onClick={onClose}>Close</button>
+              </div>
             </div>
           </div>
         )}
