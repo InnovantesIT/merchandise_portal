@@ -252,7 +252,7 @@ export default function Login() {
       >
         
         <div className='sm:block hidden '>
-       <motion.div className="absolute sm:top-32 items-center ml-16">
+       <motion.div className="absolute sm:top-20 items-center ml-16">
   <motion.img
     initial={{ opacity: 1, x: -20 }}
     animate={{ opacity: 1, x: 0 }}

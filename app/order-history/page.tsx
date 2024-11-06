@@ -54,7 +54,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[5000]">
       <div className="bg-white rounded-lg sm:p-6 p-4 relative sm:overflow-hidden overflow-scroll max-w-full mx-2 md:mx-0">
         <h2 className="text-lg font-semibold mb-4">Order Details</h2>
 
