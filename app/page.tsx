@@ -247,19 +247,38 @@ export default function Login() {
         initial={{ opacity: 0, x: 50 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full md:w-1/2 flex justify-center items-center p-6 md:p-0"
+        className="w-full md:w-1/2 flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-24"
         style={{ backgroundColor: rightBgColor }}
       >
-        <div className="absolute top-24 hidden md:block">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+        
+        <div className='sm:block hidden '>
+       <motion.div className="absolute sm:top-44 items-center ml-16">
+  <motion.img
+    initial={{ opacity: 1, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: 0.3, duration: 0.5 }}
+    src="/img/Topline black.png" 
+    alt="Welcome Logo"
+    className="w-[180px] h-[80px]" 
+  />
+ 
+</motion.div>
+</div>
+
+<div className="absolute top-4 left-1/2 transform -translate-x-1/2 md:top-auto md:translate-x-0 md:translate-y-0 md:relative sm:hidden">
+          <motion.img
+            initial={{ opacity: 1, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-4xl font-light font-sans text-center tracking-widest"
-          >
-            Welcome!
-          </motion.h1>
+            src="/img/Topline black.png"
+            alt="Welcome Logo"
+            className="w-[180px] h-[80px] md:mt-0"
+          />
         </div>
+
+
+
+
         <motion.div
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

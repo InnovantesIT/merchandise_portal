@@ -92,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     <header className="bg-black text-white sm:p-0 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px] sm:sticky sm:top-0 z-[1000]">
       <div className="flex justify-between items-center w-full sm:w-auto sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
         <Link href={role === 'oem' ? '/dealer-orders' : '/products'} className="block">
-          <div className="relative sm:w-[250px] sm:h-[80px] w-[100px] h-[40px]  cursor-pointer">
+          <div className="relative sm:w-[250px] sm:h-[80px] w-[140px] h-[40px]  cursor-pointer">
             <img
               src="/img/headerlogo.png"
               alt="Logo"
