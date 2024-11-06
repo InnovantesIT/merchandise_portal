@@ -29,10 +29,16 @@ interface LineItem {
   tax_percentage?: string;
 }
 
+interface ShipmentOrder{
+  delivery_date: string | null;
+}
+
 interface Package {
   carrier: string;
   tracking_number: string;
   shipment_date: string; 
+  shipment_order:ShipmentOrder;
+
 }
 
 const OrderTable = () => {
@@ -305,6 +311,7 @@ const OrderTable = () => {
                         <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Carrier</th>
                         <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Tracking Number</th>
                         <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Shipment Date</th>
+                        <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Delivery Date</th> 
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -313,6 +320,7 @@ const OrderTable = () => {
                           <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.carrier}</td>
                           <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || 'N/A'}</td>
                           <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_date}</td>
+                          <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_order?.delivery_date || '--'}</td> {/* Delivery date */}
                         </tr>
                       ))}
                     </tbody>
