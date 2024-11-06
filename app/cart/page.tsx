@@ -267,8 +267,21 @@ const CartPage: React.FC = () => {
 
   useEffect(() => {
     // Calculate grand total whenever cartItems change
-    setGrandTotal(calculateGrandTotal());
+    const calculatedGrandTotal = calculateGrandTotal();
+    setGrandTotal(calculatedGrandTotal);
+  
+    // If grand total is zero, set payment details to default values and clear any error message
+    if (calculatedGrandTotal === 0) {
+      setPaymentDetails({
+        mode: '',
+        reference: '',
+        amount: '0',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setErrorMessage(null);
+    }
   }, [cartItems]);
+  
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -403,34 +416,37 @@ const CartPage: React.FC = () => {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    if (cartItems.length === 0) {
-      setErrorMessage("Your cart is empty. Add items before placing an order.");
-      return;
-    }
-  
-    // Validate payment details
-    if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
-      setErrorMessage("Please fill in all payment details.");
-      return;
-    }
-  
-    // Parse entered amount as a float and compare with grand total
-    const enteredAmount = parseFloat(paymentDetails.amount);
-  
-    // Check if entered amount is less than the grand total
-    if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
-      setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
-      return;
-    }
     
-  
-    // Clear the error message if the amount is valid
-    setErrorMessage('');
-  
     
-    setOrderPlaced(true);
-    setCanEditItems(false);
-    setErrorMessage(null);
+    const handlePlaceOrder = async (e: React.FormEvent) => {
+      e.preventDefault();
+    
+      if (cartItems.length === 0) {
+        setErrorMessage("Your cart is empty. Add items before placing an order.");
+        return;
+      }
+    
+      if (grandTotal > 0) {
+        // Validate payment details only if grandTotal is greater than zero
+        if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
+          setErrorMessage("Please fill in all payment details.");
+          return;
+        }
+    
+        const enteredAmount = parseFloat(paymentDetails.amount);
+        if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
+          setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
+          return;
+        }
+      }
+    
+      // Proceed with order placement
+      setOrderPlaced(true);
+      setCanEditItems(false);
+      setErrorMessage(null);
+      // (Continue with sales order creation logic)
+    };
+    
     const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
     const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
 

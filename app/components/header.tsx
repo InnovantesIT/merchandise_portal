@@ -25,7 +25,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
 
   const handleLogout = () => {
     setShowLogoutAlert(true);
-    setIsDrawerOpen(false); // Close the drawer when logout is triggered
+    setIsDrawerOpen(false);
   };
 
   const closeLogoutAlert = () => {
@@ -71,15 +71,12 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     }
     if (storedRole) {
       setRole(storedRole);
-
-      // Redirect OEM users to Dealer Orders page as homepage
       if (storedRole === 'oem' && window.location.pathname !== '/dealer-orders') {
         router.push('/dealer-orders');
       }
     }
   }, [router]);
 
-  // Disable scrolling when the drawer or logout alert is open
   useEffect(() => {
     if (isDrawerOpen || showLogoutAlert) {
       document.body.style.overflow = 'hidden';
@@ -94,16 +91,15 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
   return (
     <header className="bg-black text-white sm:p-0 flex flex-col sm:flex-row items-center sm:items-start sm:min-h-[120px] sm:sticky sm:top-0 z-[1000]">
       <div className="flex justify-between items-center w-full sm:w-auto sm:mr-auto mb-4 sm:mb-0 sm:ml-7 ml-3">
-        {/* Conditional link for logo based on role */}
         <Link href={role === 'oem' ? '/dealer-orders' : '/products'} className="block">
-          <div className="relative w-full h-12 sm:h-16 cursor-pointer">
+          <div className="relative sm:w-[250px] sm:h-[80px] w-[100px] h-[40px]  cursor-pointer">
             <img
               src="/img/headerlogo.png"
               alt="Logo"
               className="hidden sm:block mt-4"
             />
             <img
-              src="/img/mobheaderlogo.png"
+              src="/img/headerlogo.png"
               alt="Logo"
               className="block sm:hidden ml-2 mt-4"
             />
@@ -185,8 +181,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               </span>
             </Link>
           )}
-
-          {/* Desktop User Icon for Support and Logout */}
+          {/* Profile and Support links */}
           <div className="relative">
             <button
               onClick={toggleDropdown}
@@ -204,16 +199,22 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                   transition={{ duration: 0.2 }}
                   className="absolute right-0 mt-3 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-[1000]"
                 >
-                  <div className="py-1">
-                    <a
-                      href="mailto:support@xyz.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    >
-                      <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                      Support
-                    </a>
+                 <div className="py-1">
+  <Link href="/profile">
+    <div className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer">
+      <UserCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+      Profile
+    </div>
+  </Link>
+  <a
+    href="mailto:support@xyz.com"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+  >
+    <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+    Support
+  </a>
 
                     <button
                       onClick={handleLogout}
@@ -227,10 +228,11 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               )}
             </AnimatePresence>
           </div>
+
         </div>
       </div>
 
-      {/* Drawer for mobile screens */}
+      {/* Mobile Drawer */}
       <AnimatePresence>
         {isDrawerOpen && (
           <motion.div
@@ -312,37 +314,41 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                 </Link>
               )}
 
-              {/* Support and Logout for mobile */}
-              {!showLogoutAlert && (
-                <>
-                  <div className="flex gap-3">
-                    <LifeBuoy />
-                    <a
-                      href="mailto:support@xyz.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
-                    >
-                      Support
-                    </a>
-                  </div>
-                  <div className="flex gap-3">
-                    <LogOut />
-                    <button
-                      onClick={handleLogout}
-                      className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans text-start"
-                    >
-                      Logout
-                    </button>
-                  </div>
-                </>
-              )}
+              {/* Profile, Support, and Logout for mobile */}
+              <Link href="/profile">
+                <div className="flex gap-3">
+                  <UserCircle />
+                  <span className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans">
+                    Profile
+                  </span>
+                </div>
+              </Link>
+              <div className="flex gap-3">
+                <LifeBuoy />
+                <a
+                  href="mailto:support@xyz.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
+                >
+                  Support
+                </a>
+              </div>
+              <div className="flex gap-3">
+                <LogOut />
+                <button
+                  onClick={handleLogout}
+                  className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans text-start"
+                >
+                  Logout
+                </button>
+              </div>
             </nav>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Logout Confirmation Alert (for both mobile and desktop) */}
+      {/* Logout Confirmation Alert */}
       <AnimatePresence>
         {showLogoutAlert && (
           <motion.div

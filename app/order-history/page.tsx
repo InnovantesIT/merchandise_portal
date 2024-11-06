@@ -12,7 +12,7 @@ import Loader from '@/app/components/loader';
 interface Order {
   salesorder_id: string;
   salesorder_number: string;
-  status: 'draft' | 'confirmed' | 'shipped';
+  status: 'draft' | 'confirmed' | 'shipped'| 'fulfilled';
   date: string;
   cf_payment_details: string;
 }
@@ -38,7 +38,13 @@ interface OrderDetailsModalProps {
   packages: Package[];
 }
 
-const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, line_items = [], packages = [] }) => {
+const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { delivery_date: string } | null }> = ({
+  isOpen,
+  onClose,
+  line_items = [],
+  packages = [],
+  shipmentOrder
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -53,6 +59,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, 
           ✕
         </button>
 
+        {/* Line items table */}
         {line_items.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
@@ -69,9 +76,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, 
               <tbody className="bg-white divide-y divide-gray-200">
                 {line_items.map((item, index) => (
                   <tr key={index}>
-                    <td className="px-2 py-2 text-sm text-gray-800 max-w-full overflow-hidden overflow-ellipsis whitespace-nowrap">
-                      {item.name}
-                    </td>
+                    <td className="px-2 py-2 text-sm text-gray-800">{item.name}</td>
                     <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.hsn_or_sac}</td>
                     <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.quantity}</td>
                     <td className="px-2 py-2 text-sm text-gray-600">{parseFloat(item.rate).toFixed(2)}</td>
@@ -86,6 +91,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, 
           <p className="text-gray-600">No items to display.</p>
         )}
 
+        {/* Packages table */}
         {packages.length > 0 ? (
           <div className="overflow-x-auto mt-4">
             <h3 className="text-lg font-semibold mb-3">Shipped Packages</h3>
@@ -95,14 +101,16 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, 
                   <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Carrier</th>
                   <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Tracking Number</th>
                   <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Shipment Date</th>
+                  <th className="px-4 py-2 text-xs font-medium text-gray-600 uppercase tracking-wider">Delivery Date</th> {/* New column */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {packages.map((pkg, index) => (
                   <tr key={index} className="hover:bg-gray-50 transition-colors duration-200">
                     <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.carrier}</td>
-                    <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || 'N/A'}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || '--'}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_date}</td>
+                    <td className="px-4 py-2 text-sm text-gray-800 text-center">{shipmentOrder?.delivery_date || '--'}</td> {/* Delivery date */}
                   </tr>
                 ))}
               </tbody>
@@ -125,6 +133,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps> = ({ isOpen, onClose, 
   );
 };
 
+
 const OrderHistory: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -133,6 +142,8 @@ const OrderHistory: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [shipmentDetails, setShipmentDetails] = useState<Package[]>([]);
+  const [shipmentOrder, setShipmentOrder] = useState<{ delivery_date: string } | null>(null);
+  const [deliveryDetails,setDeliveryDetails]=useState<Package[]>([]);
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -189,8 +200,8 @@ const OrderHistory: React.FC = () => {
         setError("Authorization token not found");
         return;
       }
-
-      const response = await axios.get<{ line_items: LineItem[], packages: Package[] }>(`${baseURL}/api/get-sales-order-details`, {
+  
+      const response = await axios.get<{ line_items: LineItem[], packages: Package[], shipment_order: { delivery_date: string } }>(`${baseURL}/api/get-sales-order-details`, {
         params: {
           id: salesorder_id,
         },
@@ -199,9 +210,10 @@ const OrderHistory: React.FC = () => {
           brand: 'renault',
         },
       });
-
+  
       if (response.status === 200) {
         setSelectedLineItems(response.data.line_items);
+        setShipmentOrder(response.data.shipment_order);
         setShipmentDetails(response.data.packages);
         setIsModalOpen(true);
       } else {
@@ -217,20 +229,25 @@ const OrderHistory: React.FC = () => {
       }
     }
   };
+  
 
-  const renderProgressLine = (status: Order['status']) => {
-    const steps = ["Order Placed", "Order Confirmation", "Dispatched"];
-    const statusIndexMap: Record<Order['status'], number> = {
-      draft: 0,
-      confirmed: 1,
-      shipped: 2,
-    };
-    const statusIndex = statusIndexMap[status] || 0;
+
+ const renderProgressLine = (status: Order['status']) => {
+  const steps = ["Order Placed", "Order Confirmation", "Dispatched", "Order Delivered"];
+  const statusIndexMap: Record<Order['status'], number> = {
+    draft: 0,
+    confirmed: 1,
+    shipped: 2,
+    fulfilled: 3, // Added delivered status
+  };
+  const statusIndex = statusIndexMap[status] || 0;
+
+
 
     return (
       <div className="flex flex-col items-end w-full mt-4 md:mt-0">
         <div className="flex items-center justify-between w-full md:w-3/4 relative">
-          <div className="absolute top-1/4 left-6 right-6 -translate-y-1/3">
+          <div className="absolute top-1/4 left-6 right-9 -translate-y-1/3">
             <div className="h-0.5 bg-gray-200 w-full" />
             <div
               className="absolute left-0 top-0 h-0.5 bg-green-500 transition-all duration-500 ease-in-out"
@@ -389,11 +406,13 @@ const OrderHistory: React.FC = () => {
 
       {/* Order Details Modal */}
       <OrderDetailsModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        line_items={selectedLineItems}
-        packages={shipmentDetails}
-      />
+  isOpen={isModalOpen}
+  onClose={() => setIsModalOpen(false)}
+  line_items={selectedLineItems}
+  packages={shipmentDetails}
+  shipmentOrder={shipmentOrder}
+/>
+
     </div>
   );
 };

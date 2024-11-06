@@ -32,13 +32,15 @@ interface LineItem {
 interface Package {
   carrier: string;
   tracking_number: string;
-  shipment_date: string;
+  shipment_date: string; 
 }
 
 const OrderTable = () => {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [packages, setPackages] = useState<Package[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -71,6 +73,7 @@ const OrderTable = () => {
           },
         });
         setOrders(response.data || []);
+        setFilteredOrders(response.data || []); // Display all orders initially
       } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.clear();
@@ -84,6 +87,16 @@ const OrderTable = () => {
 
     fetchOrderStatus();
   }, [router]);
+
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    const lowercasedQuery = query.toLowerCase();
+    setFilteredOrders(orders.filter(order => 
+      order.salesorder_number.toLowerCase().includes(lowercasedQuery)
+    ));
+  };
+  
 
   const handleViewDetails = async (salesOrderId: string) => {
     try {
@@ -197,7 +210,17 @@ const OrderTable = () => {
       <Header cartItemCount={0} />
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <h1 className="text-xl font-bold text-gray-900 mb-6">Dealer Orders</h1>
-        <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+         {/* Search Bar */}
+         <div className="mb-4">
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Search by Order Number"
+            className="w-full p-2 border border-gray-300 rounded-md"
+          />
+        </div>
+        <div className="bg-white shadow  sm:overflow-hidden overflow-scroll sm:rounded-lg">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -209,7 +232,7 @@ const OrderTable = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {orders.map((order) => (
+            {filteredOrders.map((order) => (
                 <tr key={order.salesorder_id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                     {order.company_name || 'Ambay Motors Pvt Ltd'}
@@ -224,10 +247,10 @@ const OrderTable = () => {
                     <p className="text-gray-600">₹{order.cf_payment_details.split('-')[1]}</p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${order.status === 'Dispatched' ? 'bg-blue-500 text-white' : 'bg-green-100 text-green-800'}`}>
-                      {order.status === 'draft' ? 'Order Placed' : order.status || 'N/A'}
-                    </span>
-                  </td>
+  <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${order.status === 'Dispatched' ? 'bg-blue-500 text-white' : 'bg-green-100 text-green-800'}`}>
+    {order.status === 'draft' ? 'Order Placed' : order.status === 'fulfilled' ? 'Delivered' : order.status || 'N/A'}
+  </span>
+</td>
                 </tr>
               ))}
             </tbody>
@@ -236,7 +259,7 @@ const OrderTable = () => {
 
         {isModalOpen && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-1/2">
+            <div className="bg-white  p-6   rounded-lg shadow-lg sm:w-1/2 max-w-full">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-lg font-semibold mb-4">Order Details</h2>
                 <button className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 focus:outline-none" onClick={onClose}>✕</button>
