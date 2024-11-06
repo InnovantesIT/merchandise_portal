@@ -25,10 +25,16 @@ interface LineItem {
   tax_percentage: string;
 }
 
+interface ShipmentOrder{
+  delivery_date: string | null;
+}
+
 interface Package {
   carrier: string;
   tracking_number: string | null;
   shipment_date: string;
+  shipment_order:ShipmentOrder;
+
 }
 
 interface OrderDetailsModalProps {
@@ -110,7 +116,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
                     <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.carrier}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.tracking_number || '--'}</td>
                     <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_date}</td>
-                    <td className="px-4 py-2 text-sm text-gray-800 text-center">{shipmentOrder?.delivery_date || '--'}</td> {/* Delivery date */}
+                    <td className="px-4 py-2 text-sm text-gray-800 text-center">{pkg.shipment_order?.delivery_date || '--'}</td> {/* Delivery date */}
                   </tr>
                 ))}
               </tbody>
