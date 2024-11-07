@@ -101,10 +101,12 @@ function ProfilePage() {
     setOtp('');
   };
 
+  const [serverOtp, setServerOtp] = useState('');
+
   const handleProceed = async () => {
     const token = retrieveToken();
     if (!token) return;
-
+  
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/send-otp-email`,
@@ -115,18 +117,28 @@ function ProfilePage() {
           },
         }
       );
-      if (response.data) {
+      if (response.data.otp) {
+        setServerOtp(response.data.otp); // Store the OTP sent from the server
         setShowOtpInput(true);
+      } else {
+        alert('OTP not sent. Please try again.');
       }
     } catch (error) {
       console.error('Failed to send OTP:', error);
+      alert('Error sending OTP, please check your connection and try again.');
     }
   };
-
+  
   const handleSave = async () => {
     const token = retrieveToken();
     if (!token) return;
-
+  
+    // Compare the client-entered OTP with the server-sent OTP
+    if (otp !== serverOtp) {
+      alert('OTP verification failed, please enter the correct OTP.');
+      return; // Stop the function if the OTPs do not match
+    }
+  
     try {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/update-email`,
@@ -137,18 +149,23 @@ function ProfilePage() {
           },
         }
       );
-      if (response.data.updated === true) { 
+  
+      if (response.data.updated===true) {
         setEmail(editableEmail);
         setIsEditing(false);
         setShowOtpInput(false);
         setOtp('');
+        setServerOtp(''); // Clear the OTP from state
       } else {
-        alert('OTP verification failed');
+        alert('Email update failed. Please try again.');
       }
     } catch (error) {
       console.error('Failed to update email:', error);
+      alert('Error updating email, please check your connection and try again.');
     }
   };
+  
+  
 
   return (
     <main className='bg-gray-50 min-h-screen'>
