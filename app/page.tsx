@@ -211,207 +211,193 @@ export default function Login() {
 
   return (
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    transition={{ duration: 0.5 }}
+    className="flex flex-col md:flex-row min-h-screen"
+  >
+    <motion.div
+      initial={{ opacity: 0, x: -50 }}
+      animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex flex-col md:flex-row min-h-screen"
+      className="w-full md:w-1/2 flex justify-center items-center"
+      style={{ backgroundColor: leftBgColor }}
     >
-      <motion.div
-        initial={{ opacity: 0, x: -50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full md:w-1/2 flex justify-center items-center"
-        style={{ backgroundColor: leftBgColor }}
-      >
-        <div className="text-center md:text-left">
-          <motion.img
-            initial={{ scale: 0, rotate: 0 }}
-            animate={{ scale: 1, rotate: 0 }}
-            transition={{ duration: 0.8, type: 'spring' }}
-            src="/img/logo.png"
-            alt="Logo"
-            className="mx-auto mt-3 sm:mt-0 sm:mb-4 w-1/4 sm:w-auto"
-          />
-          <motion.img
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            src="/img/car.png"
-            alt="Car"
-            className="mx-auto md:mx-0"
-          />
-        </div>
-      </motion.div>
-
-      <motion.div
-        initial={{ opacity: 0, x: 50 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full md:w-1/2 flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-24"
-        style={{ backgroundColor: rightBgColor }}
-      >
-        
-        <div className='sm:block hidden '>
-       <motion.div className="absolute sm:top-20 items-center ml-16">
-  <motion.img
-    initial={{ opacity: 1, x: -20 }}
-    animate={{ opacity: 1, x: 0 }}
-    transition={{ delay: 0.3, duration: 0.5 }}
-    src="/img/Topline black.png" 
-    alt="Welcome Logo"
-    className="w-[180px] h-[80px]" 
-  />
- 
-</motion.div>
-</div>
-
-<div className="absolute top-4 left-1/2 transform -translate-x-1/2 md:top-auto md:translate-x-0 md:translate-y-0 md:relative sm:hidden">
-          <motion.img
-            initial={{ opacity: 1, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-            src="/img/Topline black.png"
-            alt="Welcome Logo"
-            className="w-[180px] h-[80px] md:mt-0"
-          />
-        </div>
-
-
-
-
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.4, duration: 0.5 }}
-          className="bg-white p-10 rounded-lg shadow-lg w-full max-w-sm"
-        >
-          <AnimatePresence mode="wait">
-            <motion.form
-              key={step}
-              variants={fadeInUp}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.3 }}
-              onSubmit={handleSubmit}
-            >
-              <h2 className="text-lg font-light font-sans mb-4">{step === 'email' ? 'LOGIN NOW' : 'ENTER OTP'}</h2>
-              {step === 'email' ? (
-                <motion.div className="mb-4" variants={fadeInUp}>
-                  <label
-                    htmlFor="username"
-                    className="block text-sm font-medium font-sans text-gray-700 mb-2"
-                  >
-                    Enter Registered Email
-                  </label>
-                  <motion.input
-                    whileFocus={{ scale: 1.02 }}
-                    transition={{ duration: 0.2 }}
-                    type="text"
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    autoComplete="username"
-                    className={`w-full px-4 py-2 border ${
-                      errors.username && hasSubmitted
-                        ? 'border-red-500'
-                        : 'border-gray-300'
-                    } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                    placeholder="Enter Email Address"
-                    aria-invalid={errors.username ? 'true' : 'false'}
-                    aria-describedby={errors.username ? 'username-error' : undefined}
-                  />
-                  {errors.username && hasSubmitted && (
-                    <p id="username-error" className="text-red-500 text-sm mt-1">
-                      {errors.username}
-                    </p>
-                  )}
-                </motion.div>
-              ) : (
-                <motion.div className="mb-6" variants={fadeInUp}>
-                  <label className="block text-sm font-medium font-sans text-gray-700 mb-2">
-                    Enter OTP
-                  </label>
-                  <div className="flex justify-between">
-                    {otp.map((digit, index) => (
-                      <motion.input
-                        key={index}
-                        ref={(el) => {
-                          otpRefs.current[index] = el;
-                        }}
-                        type="text"
-                        maxLength={1}
-                        value={digit}
-                        onChange={(e) => handleOtpChange(e.target.value, index)}
-                        onKeyDown={(e) => handleKeyDown(e, index)}
-                        className="w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        whileFocus={{ scale: 1.1 }}
-                        transition={{ duration: 0.2 }}
-                        aria-label={`OTP Digit ${index + 1}`}
-                      />
-                    ))}
-                  </div>
-                  {errors.otp && hasSubmitted && (
-                    <p className="text-red-500 text-sm mt-1">{errors.otp}</p>
-                  )}
-                  <div className="flex items-center justify-between mt-4">
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      type="button"
-                      onClick={handleResendOtp}
-                      className={`text-black focus:outline-none ${
-                        canResend && !loading.resendOtp
-                          ? ''
-                          : 'opacity-50 cursor-not-allowed'
-                      }`}
-                      disabled={!canResend || loading.resendOtp}
-                    >
-                      {loading.resendOtp ? 'Resending...' : 'Resend OTP'}
-                    </motion.button>
-                    {!canResend && (
-                      <span className="text-sm text-gray-500">
-                        Resend in {formatTime(timer)} seconds
-                      </span>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                type="submit"
-                className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${
-                  !isValid || loading.validateUsername || loading.validateOtp
-                    ? 'opacity-50 cursor-not-allowed'
-                    : ''
-                }`}
-                disabled={loading.validateUsername || loading.validateOtp}
-              >
-                {step === 'email' && loading.validateUsername
-                  ? 'Validating...'
-                  : step === 'otp' && loading.validateOtp
-                  ? 'Validating...'
-                  : 'Confirm'}
-                <ArrowRight color="#ffffff" strokeWidth={1.25} />
-              </motion.button>
-            </motion.form>
-          </AnimatePresence>
-        </motion.div>
-      </motion.div>
-
-      <ForgetPasswordModal isOpen={isModalOpen} onClose={closeModal} />
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+      <div className="text-center md:text-left">
+        <motion.img
+          initial={{ scale: 0, rotate: 0 }}
+          animate={{ scale: 1, rotate: 0 }}
+          transition={{ duration: 0.8, type: 'spring' }}
+          src="/img/logo.png"
+          alt="Logo"
+          className="mx-auto mt-3 sm:mt-0 sm:mb-4 w-1/4 sm:w-auto"
+        />
+        <motion.img
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.5 }}
+          src="/img/car.png"
+          alt="Car"
+          className="mx-auto md:mx-0"
+        />
+      </div>
     </motion.div>
+
+    <motion.div
+      initial={{ opacity: 0, x: 50 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.5 }}
+      className="w-full md:w-1/2 flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-24"
+      style={{ backgroundColor: rightBgColor }}
+    >
+      <h1 className="text-3xl absolute top-36 items-center tracking-wider font-sans font-light ">Welcome!</h1>
+      <div className="text-center mb-4 text-lg font-sans font-semibold">
+      </div>
+  
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+        className="bg-white p-10 rounded-lg shadow-lg w-full max-w-sm relative flex items-center"
+      >
+        <AnimatePresence mode="wait">
+          <motion.form
+            key={step}
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.3 }}
+            onSubmit={handleSubmit}
+            className="w-full"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-light font-sans">
+                {step === 'email' ? 'LOGIN NOW' : 'ENTER OTP'}
+              </h2>
+              <motion.img
+                src="/img/Topline Logo.png"
+                alt="Logo"
+                className="w-32 h-12 "
+                initial={{ opacity: 0, x: 10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              />
+            </div>
+            {step === 'email' ? (
+              <motion.div className="mb-4" variants={fadeInUp}>
+                <label
+                  htmlFor="username"
+                  className="block text-sm font-medium font-sans text-gray-700 mb-2"
+                >
+                  Enter Registered Email
+                </label>
+                <motion.input
+                  whileFocus={{ scale: 1.02 }}
+                  transition={{ duration: 0.2 }}
+                  type="text"
+                  id="username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  className={`w-full px-4 py-2 border ${
+                    errors.username && hasSubmitted
+                      ? 'border-red-500'
+                      : 'border-gray-300'
+                  } rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                  placeholder="Enter Email Address"
+                  aria-invalid={errors.username ? 'true' : 'false'}
+                  aria-describedby={errors.username ? 'username-error' : undefined}
+                />
+                {errors.username && hasSubmitted && (
+                  <p id="username-error" className="text-red-500 text-sm mt-1">
+                    {errors.username}
+                  </p>
+                )}
+              </motion.div>
+            ) : (
+              <motion.div className="mb-6" variants={fadeInUp}>
+                <div className="flex justify-between">
+                  {otp.map((digit, index) => (
+                    <motion.input
+                      key={index}
+                      ref={(el) => {
+                        otpRefs.current[index] = el;
+                      }}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(e.target.value, index)}
+                      onKeyDown={(e) => handleKeyDown(e, index)}
+                      className="w-12 h-12 text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      whileFocus={{ scale: 1.1 }}
+                      transition={{ duration: 0.2 }}
+                      aria-label={`OTP Digit ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                {errors.otp && hasSubmitted && (
+                  <p className="text-red-500 text-sm mt-1">{errors.otp}</p>
+                )}
+                <div className="flex items-center justify-between mt-4">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    type="button"
+                    onClick={handleResendOtp}
+                    className={`text-black focus:outline-none ${
+                      canResend && !loading.resendOtp
+                        ? ''
+                        : 'opacity-50 cursor-not-allowed'
+                    }`}
+                    disabled={!canResend || loading.resendOtp}
+                  >
+                    {loading.resendOtp ? 'Resending...' : 'Resend OTP'}
+                  </motion.button>
+                  {!canResend && (
+                    <span className="text-sm text-gray-500">
+                      Resend in {formatTime(timer)} seconds
+                    </span>
+                  )}
+                </div>
+              </motion.div>
+            )}
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="submit"
+              className={`w-full bg-black text-white justify-center py-2 px-4 inline-flex gap-2 hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-600 focus:ring-opacity-50 rounded-md transition-colors duration-200 ${
+                !isValid || loading.validateUsername || loading.validateOtp
+                  ? 'opacity-50 cursor-not-allowed'
+                  : ''
+              }`}
+              disabled={loading.validateUsername || loading.validateOtp}
+            >
+              {step === 'email' && loading.validateUsername
+                ? 'Validating...'
+                : step === 'otp' && loading.validateOtp
+                ? 'Validating...'
+                : 'Confirm'}
+              <ArrowRight color="#ffffff" strokeWidth={1.25} />
+            </motion.button>
+          </motion.form>
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
+  
+    <ForgetPasswordModal isOpen={isModalOpen} onClose={closeModal} />
+    <ToastContainer
+      position="top-right"
+      autoClose={3000}
+      hideProgressBar={false}
+      newestOnTop={false}
+      closeOnClick
+      rtl={false}
+      pauseOnFocusLoss
+      draggable
+      pauseOnHover
+    />
+  </motion.div>
+  
   );
 }
