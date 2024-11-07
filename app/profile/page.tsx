@@ -193,7 +193,7 @@ function ProfilePage() {
       {isEditing && (
         <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Update Email</h2>
+            <h2 className="text-xl font-semibold mb-2">Update Email</h2>
             {!showOtpInput ? (
               <>
                 <label htmlFor="email" className="block mb-2 font-semibold">New Email:</label>
@@ -211,6 +211,7 @@ function ProfilePage() {
               </>
             ) : (
               <>
+              <h3 className=' text-sm font-semibold'>OTP has been sent to your new entered email</h3>
                 <label htmlFor="otp" className="block mb-2 font-semibold">Enter OTP:</label>
                 <input
                   type="text"
