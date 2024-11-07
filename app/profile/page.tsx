@@ -1,9 +1,10 @@
-"use client";
+"use client"
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Header from '@/app/components/header';
 import { useRouter } from 'next/navigation';
 import { decrypt } from '@/app/action/enc';
+import { Edit } from 'lucide-react';
 
 type BillingAddress = {
   address_id?: string;
@@ -23,11 +24,15 @@ type BillingAddress = {
 
 function ProfilePage() {
   const [email, setEmail] = useState('');
+  const [editableEmail, setEditableEmail] = useState('');
+  const [otp, setOtp] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
   const [name, setName] = useState('');
   const [mobile, setMobile] = useState('');
   const [gst, setGST] = useState('');
   const [billingAddress, setBillingAddress] = useState<BillingAddress>({});
   const [loading, setLoading] = useState(true);
+  const [showOtpInput, setShowOtpInput] = useState(false);
   const router = useRouter();
 
   const retrieveToken = () => {
@@ -77,6 +82,74 @@ function ProfilePage() {
     return `${billingAddress.address || ''}, ${billingAddress.city || ''}, ${billingAddress.state || ''} ${billingAddress.zip || ''}, ${billingAddress.country || ''}`;
   };
 
+  const handleEditClick = () => {
+    setEditableEmail(email);
+    setIsEditing(true);
+  };
+
+  const handleEmailChange = (event: any) => {
+    setEditableEmail(event.target.value);
+  };
+
+  const handleOtpChange = (event: any) => {
+    setOtp(event.target.value);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setShowOtpInput(false);
+    setOtp('');
+  };
+
+  const handleProceed = async () => {
+    const token = retrieveToken();
+    if (!token) return;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/send-otp-email`,
+        { email: editableEmail },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data) {
+        setShowOtpInput(true);
+      }
+    } catch (error) {
+      console.error('Failed to send OTP:', error);
+    }
+  };
+
+  const handleSave = async () => {
+    const token = retrieveToken();
+    if (!token) return;
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/update-email`,
+        { email: editableEmail, otp },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      if (response.data.updated === true) { 
+        setEmail(editableEmail);
+        setIsEditing(false);
+        setShowOtpInput(false);
+        setOtp('');
+      } else {
+        alert('OTP verification failed');
+      }
+    } catch (error) {
+      console.error('Failed to update email:', error);
+    }
+  };
+
   return (
     <main className='bg-gray-50 min-h-screen'>
       {loading && (
@@ -91,20 +164,53 @@ function ProfilePage() {
           <p className="mb-3"><strong>Company Name:</strong> {name}</p>
           <p className="mb-3"><strong>Address:</strong> {formatAddress()}</p>
           <p className="mb-3"><strong>GST Number:</strong> {gst}</p>
-          <p className="mb-3"><strong>Email:</strong> {email}</p>
-        </div>
-        <div className="text-center mt-6">
-          <p>
-            For any changes in this profile, please contact customer support at{' '}
-            <a
-              href="mailto:tech@toplineIndia.com"
-              className="text-blue-500 underline"
-            >
-              tech@toplineIndia.com
-            </a>
-          </p>
+          <div className="flex items-center mb-3">
+            <strong>Email:</strong> {email}
+            <button onClick={handleEditClick} className="ml-2">
+              <Edit className="text-blue-500 h-6 w-6 hover:text-blue-700 cursor-pointer" />
+            </button>
+          </div>
         </div>
       </div>
+      
+      {isEditing && (
+        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4">Update Email</h2>
+            {!showOtpInput ? (
+              <>
+                <label htmlFor="email" className="block mb-2 font-semibold">New Email:</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={editableEmail}
+                  onChange={handleEmailChange}
+                  className="form-input px-4 py-2 border rounded-md w-full"
+                />
+                <div className="flex justify-end space-x-4 mt-4">
+                  <button onClick={handleCancel} className="py-2 px-4 border rounded-md">Cancel</button>
+                  <button onClick={handleProceed} className="py-2 px-4 border rounded-md bg-blue-500 text-white">Proceed</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <label htmlFor="otp" className="block mb-2 font-semibold">Enter OTP:</label>
+                <input
+                  type="text"
+                  id="otp"
+                  value={otp}
+                  onChange={handleOtpChange}
+                  className="form-input px-4 py-2 border rounded-md w-full"
+                />
+                <div className="flex justify-end space-x-4 mt-4">
+                  <button onClick={handleCancel} className="py-2 px-4 border rounded-md">Cancel</button>
+                  <button onClick={handleSave} className="py-2 px-4 border rounded-md bg-blue-500 text-white">Save</button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
