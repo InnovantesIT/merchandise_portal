@@ -278,7 +278,7 @@ export default function Login() {
               <motion.img
                 src="/img/Topline Logo.png"
                 alt="Logo"
-                className="w-32 h-12 "
+                className="w-24 h-9 "
                 initial={{ opacity: 0, x: 10 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
