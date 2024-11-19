@@ -273,7 +273,7 @@ export default function Login() {
           >
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-light font-sans">
-                {step === 'email' ? 'LOGIN NOW' : 'ENTER OTP'}
+                {step === 'email' ? 'LOGIN ' : 'ENTER OTP'}
               </h2>
               <motion.img
                 src="/img/Topline Logo.png"
