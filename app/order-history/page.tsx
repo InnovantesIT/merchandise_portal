@@ -37,11 +37,26 @@ interface Package {
 
 }
 
+interface ShippingAddress {
+  address: string;
+  street2?: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  country_code: string;
+  attention?: string;
+  fax?: string;
+  phone?: string;
+  state_code?: string;
+}
+
 interface OrderDetailsModalProps {
   isOpen: boolean;
   onClose: () => void;
   line_items: LineItem[];
   packages: Package[];
+  shippingAddress: ShippingAddress | null;
 }
 
 const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { delivery_date: string } | null }> = ({
@@ -49,13 +64,15 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
   onClose,
   line_items = [],
   packages = [],
-  shipmentOrder
+  shipmentOrder,
+  shippingAddress,
+
 }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[5000]">
-      <div className="bg-white rounded-lg sm:p-6 p-4 relative sm:overflow-hidden overflow-scroll max-w-full mx-2 md:mx-0">
+      <div className="bg-white rounded-lg sm:p-8 p-4 relative sm:overflow-hidden overflow-scroll max-w-full mx-2 md:mx-0">
         <h2 className="text-lg font-semibold mb-4">Order Details</h2>
 
         <button
@@ -64,6 +81,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
         >
           ✕
         </button>
+
+
+
 
         {/* Line items table */}
         {line_items.length > 0 ? (
@@ -74,20 +94,20 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Name</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">HSN</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                  {/* <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
                   <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax</th>
+                  <th className="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax</th> */}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {line_items.map((item, index) => (
                   <tr key={index}>
                     <td className="px-2 py-2 text-sm text-gray-800">{item.name}</td>
-                    <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.hsn_or_sac}</td>
+                    <td className="px-2 py-2 text-sm text-gray-600 text-start">{item.hsn_or_sac}</td>
                     <td className="px-2 py-2 text-sm text-gray-600 text-center">{item.quantity}</td>
-                    <td className="px-2 py-2 text-sm text-gray-600">{parseFloat(item.rate).toFixed(2)}</td>
+                    {/* <td className="px-2 py-2 text-sm text-gray-600">{parseFloat(item.rate).toFixed(2)}</td>
                     <td className="px-2 py-2 text-sm text-gray-800">{(parseFloat(item.rate) * item.quantity).toFixed(2)}</td>
-                    <td className="px-2 py-2 text-sm text-gray-800">{(parseFloat(item.tax_percentage))}%</td>
+                    <td className="px-2 py-2 text-sm text-gray-800">{(parseFloat(item.tax_percentage))}%</td> */}
                   </tr>
                 ))}
               </tbody>
@@ -96,6 +116,23 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
         ) : (
           <p className="text-gray-600">No items to display.</p>
         )}
+        {/* Shipping Address */}
+{shippingAddress ? (
+  <div className="mb-4">
+    <h3 className="text-md font-semibold my-3">Shipping Address</h3>
+    <p className="text-gray-700 text-sm">
+       {shippingAddress.attention || ''}, 
+      {shippingAddress.address}, 
+      {shippingAddress.street2 || ''}, 
+      {shippingAddress.city || ''}, 
+      {shippingAddress.state || ''}, 
+      {shippingAddress.zip}, 
+      {shippingAddress.country}
+    </p>
+  </div>
+) : (
+  <p className="text-gray-600">Shipping address not available.</p>
+)}
 
         {/* Packages table */}
         {packages.length > 0 ? (
@@ -153,6 +190,7 @@ const OrderHistory: React.FC = () => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedShippingAddress, setSelectedShippingAddress] = useState<ShippingAddress | null>(null);
   const router = useRouter();
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -207,7 +245,7 @@ const OrderHistory: React.FC = () => {
         return;
       }
   
-      const response = await axios.get<{ line_items: LineItem[], packages: Package[], shipment_order: { delivery_date: string } }>(`${baseURL}/api/get-sales-order-details`, {
+      const response = await axios.get<{ line_items: LineItem[], packages: Package[], shipment_order: { delivery_date: string }, shipping_address: ShippingAddress;}>(`${baseURL}/api/get-sales-order-details`, {
         params: {
           id: salesorder_id,
         },
@@ -221,6 +259,8 @@ const OrderHistory: React.FC = () => {
         setSelectedLineItems(response.data.line_items);
         setShipmentOrder(response.data.shipment_order);
         setShipmentDetails(response.data.packages);
+        setSelectedShippingAddress(response.data.shipping_address); // Set shipping address
+
         setIsModalOpen(true);
       } else {
         setError("Failed to fetch sales order details");
@@ -394,9 +434,9 @@ const OrderHistory: React.FC = () => {
                     {renderProgressLine(order.status)}
                   </div>
                   <p className="text-gray-600 mb-2">Order Date: {formatDate(order.date)}</p>
-                  <p className="text-gray-600 mb-2">Amount: ₹{order.cf_payment_details.split('-')[1]}</p>
+                  {/* <p className="text-gray-600 mb-2">Amount: ₹{order.cf_payment_details.split('-')[1]}</p>
                   <p className="text-gray-600 mb-2">Payment Mode: {order.cf_payment_details.split('-')[0]}</p>
-                  <p className="text-gray-600 mb-2">Reference Number: {order.cf_payment_details.split('-').pop()}</p>
+                  <p className="text-gray-600 mb-2">Reference Number: {order.cf_payment_details.split('-').pop()}</p> */}
                   <button
                     className="bg-black text-white py-2 px-4 rounded"
                     onClick={() => handleViewDetails(order.salesorder_id)}
@@ -417,7 +457,9 @@ const OrderHistory: React.FC = () => {
   line_items={selectedLineItems}
   packages={shipmentDetails}
   shipmentOrder={shipmentOrder}
+  shippingAddress={selectedShippingAddress}
 />
+
 
     </div>
   );

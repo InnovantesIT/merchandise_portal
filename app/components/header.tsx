@@ -94,14 +94,14 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
         <Link href={role === 'oem' ? '/dealer-orders' : '/products'} className="block">
           <div className="relative sm:w-[150px] sm:h-[50px] w-[90px] h-[40px]  cursor-pointer">
             <img
-              src="/img/logoheader.png"
+              src="/img/mobheaderlogo.png"
               alt="Logo"
-              className="hidden sm:block mt-4"
+              className="hidden sm:block mt-6"
             />
             <img
-              src="/img/logoheader.png"
+              src="/img/mobheaderlogo.png"
               alt="Logo"
-              className="block sm:hidden ml-2 mt-4"
+              className="block sm:hidden mt-3 h-10"
             />
           </div>
         </Link>

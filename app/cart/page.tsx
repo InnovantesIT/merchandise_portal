@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import Footer from '@/app/components/footer';
 import { decrypt } from '@/app/action/enc';
 import Link from 'next/link';
+import AddressDropdown from '../components/addressdropdown';
 
 interface Product {
   id: number;
@@ -27,6 +28,23 @@ interface Product {
   createdAt: string;
   updatedAt: string;
 }
+interface Address {
+  address_id: string;
+  attention: string;
+  address: string;
+  street2: string;
+  city: string;
+  state: string;
+  state_code: string;
+  zip: string;
+  country: string;
+  country_code: string;
+  phone: string;
+  fax: string;
+  tax_info_id: string;
+}
+
+
 
 const CartItem: React.FC<{
   product: Product;
@@ -34,20 +52,13 @@ const CartItem: React.FC<{
   onUpdateQuantity: (product: Product, change: number) => void;
   canEditItems: boolean;
 }> = ({ product, onRemove, onUpdateQuantity, canEditItems }) => {
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value, 10);
-    if (!isNaN(value) && value >= 0) {
-      onUpdateQuantity(product, value - product.quantity);
-    }
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       transition={{ duration: 0.3 }}
-      className="relative flex flex-col p-6 border rounded-lg mb-4 bg-[#FBFEFF]"
+      className="relative flex flex-col p-5 border rounded-lg mb-4 bg-[#FBFEFF]"
     >
       <button
         className="absolute sm:top-1 sm:right-1 top-2 right-2 text-gray-500 hover:text-gray-700"
@@ -62,24 +73,22 @@ const CartItem: React.FC<{
 
         <div className="flex items-center border rounded-md">
           <button
-            onClick={() => onUpdateQuantity(product, -1)}
-            className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
-            disabled={!canEditItems}
+  onClick={() => onUpdateQuantity(product, -50)}
+  className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || product.quantity === 50 ? '' : ''}`}
+>
+  <Minus size={16} />
+</button>
+
+          <div
+            className="w-12 text-center font-semibold"
           >
-            <Minus size={16} />
-          </button>
-          <input
-            type="number"
-            className="w-12 text-center"
-            value={product.quantity}
-            onChange={handleQuantityChange}
-            disabled={!canEditItems}
-          />
+            {product.quantity}
+          </div>
           <button
-            onClick={() => onUpdateQuantity(product, 1)}
+            onClick={() => onUpdateQuantity(product, 50)}
             className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
-            disabled={!canEditItems}
-          >
+
+            >
             <Plus size={16} />
           </button>
         </div>
@@ -88,19 +97,19 @@ const CartItem: React.FC<{
       <div className="mt-4 w-full overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-gray-100">
-              <th className="p-2 text-left">HSN Code</th>
-              <th className="p-2 text-left">Unit Price</th>
+            {/* <tr className="bg-gray-100">
+              <th className="p-2 text-left">HSN Code</th> */}
+              {/* <th className="p-2 text-left">Unit Price</th>
               <th className="p-2 text-left">Tax (%)</th>
-              <th className="p-2 text-left">Subtotal</th>
-            </tr>
+              <th className="p-2 text-left">Subtotal</th> */}
+            {/* </tr> */}
           </thead>
           <tbody>
             <tr>
-              <td className="p-2">{product.hsn_or_sac}</td>
-              <td className="p-2">₹{product.rate.toFixed(2)}</td>
+              {/* <td className="p-2">{product.hsn_or_sac}</td> */}
+              {/* <td className="p-2">₹{product.rate.toFixed(2)}</td>
               <td className="p-2">{product.tax_percentage}%</td>
-              <td className="p-2">₹{product.sub_total.toFixed(2)}</td>
+              <td className="p-2">₹{product.sub_total.toFixed(2)}</td> */}
             </tr>
           </tbody>
         </table>
@@ -130,10 +139,10 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <th className="border border-gray-300 p-2">Product Name</th>
               <th className="border border-gray-300 p-2">HSN</th>
               <th className="border border-gray-300 p-2">Qty</th>
-              <th className="border border-gray-300 p-2">Unit Price</th>
+              {/* <th className="border border-gray-300 p-2">Unit Price</th>
               <th className="border border-gray-300 p-2">Subtotal</th>
               <th className="border border-gray-300 p-2">Tax</th>
-              <th className="border border-gray-300 p-2">Total</th>
+              <th className="border border-gray-300 p-2">Total</th> */}
             </tr>
           </thead>
           <tbody>
@@ -147,16 +156,16 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
                   <td className="border border-gray-300 p-2 text-center">{item.item_name}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.hsn_or_sac}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.quantity}</td>
-                  <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
+                  {/* <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">₹{subtotal.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
-                  <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td>
+                  <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td> */}
                 </tr>
               );
             })}
 
             {/* Total Shipping charge row */}
-            <tr className="bg-gray-50">
+            {/* <tr className="bg-gray-50">
               <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -173,7 +182,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
             </tr>
 
             {/* Total Packaging charge row */}
-            <tr className="bg-white">
+            {/* <tr className="bg-white">
               <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -187,13 +196,14 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <td className="border border-gray-300 p-2 text-center">
                 ₹{(cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}
               </td>
-            </tr>
+            </tr>  */}
           </tbody>
         </table>
       </div>
       <div className="mt-4 text-right my-3">
         <p className="text-xl font-bold">
-          Grand Total: <span className="text-2xl">₹{(grandTotal + cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}</span>
+        {/* Grand Total: <span className="text-2xl">₹{(grandTotal  + cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18 ).toFixed(2)}</span> */}
+
         </p>
       </div>
     </div>
@@ -205,6 +215,8 @@ const CartPage: React.FC = () => {
   const [canEditItems, setCanEditItems] = useState(true);
   const [showOrderSummary, setShowOrderSummary] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
@@ -240,6 +252,8 @@ const CartPage: React.FC = () => {
       return;
     }
 
+    
+
     const fetchCartItems = async () => {
       try {
         const response = await axios.get(`${baseURL}/api/cart-by-user-id`, {
@@ -249,6 +263,11 @@ const CartPage: React.FC = () => {
         });
         setCartItems(response.data.data);
         setShowPaymentDetails(response.data.data.length > 0);
+        const addressResponse = await axios.get(`${baseURL}/api/user-details`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAddresses(addressResponse.data.addresses);
+
       } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.removeItem('token');
@@ -264,6 +283,19 @@ const CartPage: React.FC = () => {
 
     fetchCartItems();
   }, [baseURL, router]);
+  const formatAddress = (address: Address) => {
+    let parts = [
+      address.attention,
+      address.address,
+      address.street2,
+      address.city,
+      address.state,
+      address.zip,
+      address.country
+    ].filter(Boolean); // Remove empty or undefined elements
+    return parts.join(', ');
+  };
+
 
   useEffect(() => {
     // Calculate grand total whenever cartItems change
@@ -303,13 +335,13 @@ const CartPage: React.FC = () => {
     }, 0);
     const total = subtotal + tax;
 
-    const totalShipping = cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0);
-    const totalShippingWithTax = totalShipping * 1.18;
+    // const totalShipping = cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0);
+    // const totalShippingWithTax = totalShipping * 1.18;
 
-    const totalPackaging = cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0);
-    const totalPackagingWithTax = totalPackaging * 1.18;
+    // const totalPackaging = cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0);
+    // const totalPackagingWithTax = totalPackaging * 1.18;
 
-    return total + totalShippingWithTax + totalPackagingWithTax;
+    return total ;
   };
 
   const handleUpdateQuantity = async (product: Product, change: number) => {
@@ -318,9 +350,10 @@ const CartPage: React.FC = () => {
       router.push('/');
       return;
     }
-
-    const newQuantity = product.quantity + change;
-    if (newQuantity > 0) {
+  
+    const newQuantity = product.quantity + change;  // Calculate the new quantity based on the change (-50 or +50)
+    
+    if (newQuantity > 0) {  // If the new quantity is still more than 0, update the quantity
       try {
         const response = await axios.post(`${baseURL}/api/add-cart`, {
           item_id: product.item_id,
@@ -331,7 +364,7 @@ const CartPage: React.FC = () => {
             brand: 'renault',
           },
         });
-
+  
         if (response.status === 200) {
           setCartItems((prevItems) =>
             prevItems.map((item) =>
@@ -344,24 +377,20 @@ const CartPage: React.FC = () => {
                 : item
             )
           );
+        } else {
+          console.error('Failed to update quantity:', response);
+          setErrorMessage('Failed to update item quantity.');
         }
-      } catch (error: any) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('customer_id');
-          localStorage.removeItem('first_name');
-          localStorage.removeItem('username');
-
-          router.push('/');
-        }
+      } catch (error) {
         console.error('Error updating quantity:', error);
         setErrorMessage('Failed to update item quantity.');
       }
-    } else {
+    } else {  // If the new quantity is 0 or less, remove the item from the cart
       handleRemoveFromCart(product);
     }
   };
+  
+  
 
   const handleRemoveFromCart = async (product: Product) => {
     const token = retrieveToken();
@@ -372,7 +401,7 @@ const CartPage: React.FC = () => {
     try {
       const response = await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
-        quantity: 0,
+        quantity:0,
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -416,42 +445,36 @@ const CartPage: React.FC = () => {
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
   
-    
-    
-    const handlePlaceOrder = async (e: React.FormEvent) => {
-      e.preventDefault();
-    
-      if (cartItems.length === 0) {
-        setErrorMessage("Your cart is empty. Add items before placing an order.");
+    if (cartItems.length === 0) {
+      setErrorMessage("Your cart is empty. Add items before placing an order.");
+      return;
+    }
+  
+    if (!selectedAddress) {
+      setErrorMessage("Please select a shipping address before placing the order.");
+      return;
+    }
+  
+    if (grandTotal > 0) {
+      // Validate payment details only if grandTotal is greater than zero
+      if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
+        setErrorMessage("Please fill in all payment details.");
         return;
       }
-    
-      if (grandTotal > 0) {
-        // Validate payment details only if grandTotal is greater than zero
-        if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
-          setErrorMessage("Please fill in all payment details.");
-          return;
-        }
-    
-        const enteredAmount = parseFloat(paymentDetails.amount);
-        if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
-          setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
-          return;
-        }
+  
+      const enteredAmount = parseFloat(paymentDetails.amount);
+      if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
+        setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
+        return;
       }
-    
-      // Proceed with order placement
-      setOrderPlaced(true);
-      setCanEditItems(false);
-      setErrorMessage(null);
-      // (Continue with sales order creation logic)
-    };
-    
+    }
+  
     const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
     const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
-
+  
     const salesOrderData = {
       salesorder_number: salesOrderNumber,
+      shipping_address_id: selectedAddress, 
       line_items: cartItems.map((item) => ({
         item_id: item.item_id,
         name: item.item_name,
@@ -463,12 +486,12 @@ const CartPage: React.FC = () => {
       payment_date: paymentDetails.date,
       payment_mode: paymentDetails.mode,
     };
-
+  
     if (salesOrderData.line_items.length === 0) {
       setErrorMessage('No items in the cart to place an order.');
       return;
     }
-
+  
     try {
       const response = await axios.post(`${baseURL}/api/sales-order`, salesOrderData, {
         headers: {
@@ -476,13 +499,13 @@ const CartPage: React.FC = () => {
           brand: 'renault',
         },
       });
-
+  
       if (response.status === 200 || response.status === 201) {
         setOrderPlaced(true);
         setCanEditItems(false);
         setShowPaymentDetails(false);
         setErrorMessage(null);
-
+  
         try {
           await Promise.all(
             cartItems.map(async (item) => {
@@ -507,6 +530,7 @@ const CartPage: React.FC = () => {
       setErrorMessage('Failed to create sales order. Please try again.');
     }
   };
+  
 
   const handlePreviousOrdersClick = () => {
     router.push('/order-history');
@@ -569,6 +593,8 @@ const CartPage: React.FC = () => {
                 </motion.div>
               )}
 
+
+
               <div className="flex flex-col md:flex-row md:gap-8">
                 {!showOrderSummary && (
                   <div className="md:w-3/5 lg:w-2/3 pr-0">
@@ -602,6 +628,7 @@ const CartPage: React.FC = () => {
                     </div>
                   </div>
                 )}
+
 
                 {!showOrderSummary && (
                   <div className="md:w-1/2 lg:w-1/3 mt-6 md:mt-0">
@@ -657,8 +684,23 @@ const CartPage: React.FC = () => {
                   >
                     <OrderSummaryTable cartItems={cartItems} />
                   </motion.div>
+                  {addresses.length > 0 && (
+        <div className="">
+          <label htmlFor="address-select" className="block text-2xl font-semibold mb-2">Shipping Details</label>
+          <AddressDropdown
+  options={addresses.map((address) => ({
+    value: address.address_id,
+    label: formatAddress(address),
+  }))}
+  selectedOption={selectedAddress}
+  onOptionSelect={(value) => setSelectedAddress(value)}
+  className="w-full p-2 mr-3 border rounded-md my-3"
+/>
+
+        </div>
+      )}
                   <AnimatePresence mode="wait">
-                    {showPaymentDetails && isPaymentPlaced && (
+                  {showPaymentDetails && isPaymentPlaced && grandTotal > 0 && (
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -762,24 +804,28 @@ const CartPage: React.FC = () => {
                             )}
                           </AnimatePresence>
 
-                          <div className="flex justify-end">
-                            <motion.button
-                              type="submit"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              className="w-full sm:w-auto px-8 py-3 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out  focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
-                            >
-                              Place Order
-                            </motion.button>
-                          </div>
+                          
                         </form>
                       </motion.div>
                     )}
+                          <div className="flex justify-end mt-4">
+        <motion.button
+          type="button"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-full sm:w-auto px-8 py-3 my-4 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
+          onClick={handlePlaceOrder}
+        >
+          Place Order
+        </motion.button>
+      </div>
+
                   </AnimatePresence>
                 </>
               )}
             </>
           )}
+          
         </div>
       </div>
       <Footer />

@@ -230,7 +230,7 @@ export default function Login() {
           transition={{ duration: 0.8, type: 'spring' }}
           src="/img/logo.png"
           alt="Logo"
-          className="mx-auto mt-3 sm:mt-0 sm:mb-4 w-1/4 sm:w-auto"
+          className="mx-auto mt-3 sm:mt-0 sm:mb-12 w-1/4 sm:w-36"
         />
         <motion.img
           initial={{ y: 50, opacity: 0 }}
