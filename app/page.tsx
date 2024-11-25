@@ -230,7 +230,7 @@ export default function Login() {
           transition={{ duration: 0.8, type: 'spring' }}
           src="/img/logo.png"
           alt="Logo"
-          className="mx-auto mt-3 sm:mt-0 sm:mb-12 w-1/4 sm:w-36"
+          className="mx-auto mt-3 sm:mt-3 sm:mb-8 w-1/4 sm:w-36"
         />
         <motion.img
           initial={{ y: 50, opacity: 0 }}
@@ -250,7 +250,7 @@ export default function Login() {
       className="w-full md:w-1/2 flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-24"
       style={{ backgroundColor: rightBgColor }}
     >
-      <h1 className="text-3xl absolute top-36 items-center tracking-wider font-sans font-light ">Welcome!</h1>
+      <h1 className="text-3xl absolute top-24 items-center tracking-wider font-sans font-light ">Welcome!</h1>
       <div className="text-center mb-4 text-lg font-sans font-semibold">
       </div>
   
