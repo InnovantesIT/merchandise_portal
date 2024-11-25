@@ -17,7 +17,7 @@ bun dev
 
 ```
 jkhjkljknbkjhbn
-djdlerdsfc
+djdlerdsfcwersd
 rtgfsdfcv
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
