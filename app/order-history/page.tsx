@@ -387,9 +387,9 @@ const OrderHistory: React.FC = () => {
               <History strokeWidth={1.25} />
               <h1 className="text-2xl font-semibold text-gray-800">Order History</h1>
             </div>
-            <div className="w-full max-w-3xl mx-auto mt-4">
+            <div className="w-full max-w-6xl mx-auto mt-4">
               <div className="flex justify-between">
-  <label className="text-sm font-semibold text-gray-700 mb-2 sm:block hidden">
+  <label className="text-sm font-semibold text-gray-700  mb-2 sm:block hidden">
     Search by Order Number
   </label>
   <label className=" sm:block hidden text-sm font-semibold text-gray-700 mb-2 mr-56 ">
@@ -397,7 +397,7 @@ const OrderHistory: React.FC = () => {
   </label>
   </div>
     <div className="flex flex-col md:flex-row items-center md:space-x-4 space-y-4 md:space-y-0">
-    <div className="w-full space-y-2 md:flex md:items-center md:space-x-4">
+    <div className="w-full  space-y-2 md:flex md:items-center md:space-x-4">
       <input
         type="text"
         value={searchQuery}
