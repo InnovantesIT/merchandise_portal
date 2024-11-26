@@ -88,29 +88,11 @@ const OrderTable = () => {
     return null;
   };
 
-  const getUserRole = () => {
-    const token = retrieveToken();
-    if (!token) return null;
-
-    try {
-      // Assuming the token is a JWT
-      const decoded = JSON.parse(atob(token.split('.')[1]));
-      return decoded.role; // Replace 'role' with the correct key in your token payload
-    } catch (error) {
-      console.error("Failed to decode token:", error);
-      return null;
-    }
-  };
+ 
 
   useEffect(() => {
     const token = retrieveToken();
-    const userRole = getUserRole();
-
-    if (!token || userRole !== "oem") {
-      router.push('/'); // Redirect to home page if the role is not "oem"
-      return;
-    }
-
+  
 
     if (!token) {
       router.push('/'); // Redirect to home page if the role is not "oem"

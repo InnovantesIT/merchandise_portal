@@ -66,6 +66,7 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
   packages = [],
   shipmentOrder,
   shippingAddress,
+  
 
 }) => {
   if (!isOpen) return null;
@@ -188,6 +189,7 @@ const OrderHistory: React.FC = () => {
   const [shipmentOrder, setShipmentOrder] = useState<{ delivery_date: string } | null>(null);
   const [deliveryDetails,setDeliveryDetails]=useState<Package[]>([]);
   const [fromDate, setFromDate] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [toDate, setToDate] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShippingAddress, setSelectedShippingAddress] = useState<ShippingAddress | null>(null);
@@ -202,6 +204,14 @@ const OrderHistory: React.FC = () => {
       }
     }
     return null;
+  };
+  const handleSearchChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    const lowercasedQuery = query.toLowerCase();
+    setFilteredOrders(orders.filter(order =>
+      order.salesorder_number.toLowerCase().includes(lowercasedQuery)
+    ));
   };
 
   useEffect(() => {
@@ -372,42 +382,76 @@ const OrderHistory: React.FC = () => {
       <main className="max-w-9xl mx-auto font-sans">
         <Header cartItemCount={0} />
         <div className="py-8 md:py-12 mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+          <div className="flex flex-col sm:justify-start justify-between items-start  mb-8">
             <div className="flex items-center gap-3 mb-4 md:mb-0">
               <History strokeWidth={1.25} />
               <h1 className="text-2xl font-semibold text-gray-800">Order History</h1>
             </div>
-            <div className="w-full md:w-auto">
-              <div className="flex flex-col md:flex-row items-center gap-4">
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <input
-                    type="date"
-                    value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
-                    max={toDate || undefined}
-                    className="border rounded px-3 py-2 text-sm w-full md:w-auto"
-                    placeholder="From"
-                  />
-                  <span className="text-gray-500">to</span>
-                  <input
-                    type="date"
-                    value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
-                    min={fromDate || undefined}
-                    className="border rounded px-3 py-2 text-sm w-full md:w-auto"
-                    placeholder="To"
-                  />
-                </div>
-                <button
-                  onClick={handleDateFilter}
-                  className="bg-black text-white px-4 py-2 rounded-md flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors duration-300 w-full md:w-auto"
-                >
-                  <Search size={18} />
-                  <span>Search</span>
-                </button>
-              </div>
-            </div>
-          </div>         
+            <div className="w-full max-w-3xl mx-auto mt-4">
+              <div className="flex justify-between">
+  <label className="text-sm font-semibold text-gray-700 mb-2 sm:block hidden">
+    Search by Order Number
+  </label>
+  <label className=" sm:block hidden text-sm font-semibold text-gray-700 mb-2 mr-56 ">
+    Filter by order Date
+  </label>
+  </div>
+    <div className="flex flex-col md:flex-row items-center md:space-x-4 space-y-4 md:space-y-0">
+    <div className="w-full space-y-2 md:flex md:items-center md:space-x-4">
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={handleSearchChange}
+        placeholder="Enter order number"
+        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black transition-all duration-300"
+      />
+      <div className="flex items-center space-x-2">
+        <input
+          type="date"
+          value={fromDate}
+          onChange={(e) => {
+            setFromDate(e.target.value);
+            const filtered = orders.filter((order) => {
+              const orderDate = new Date(order.date);
+              const from = e.target.value ? new Date(e.target.value) : new Date(0);
+              const to = toDate ? new Date(toDate) : new Date();
+              return (
+                orderDate >= from && 
+                orderDate <= to && 
+                order.salesorder_number.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+            });
+            setFilteredOrders(filtered);
+          }}
+          max={toDate || undefined}
+          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black transition-all duration-300 mb-3"
+        />
+        <span className="text-gray-500 mb-2">to</span>
+        <input
+          type="date"
+          value={toDate}
+          onChange={(e) => {
+            setToDate(e.target.value);
+            const filtered = orders.filter((order) => {
+              const orderDate = new Date(order.date);
+              const from = fromDate ? new Date(fromDate) : new Date(0);
+              const to = e.target.value ? new Date(e.target.value) : new Date();
+              return (
+                orderDate >= from && 
+                orderDate <= to && 
+                order.salesorder_number.toLowerCase().includes(searchQuery.toLowerCase())
+              );
+            });
+            setFilteredOrders(filtered);
+          }}
+          min={fromDate || undefined}
+          className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black transition-all duration-300 mb-3"
+        />
+      </div>
+    </div>
+  </div>
+</div>
+</div>
 
           {loading ? (
             <div className="flex items-center justify-center h-full mx-auto">
