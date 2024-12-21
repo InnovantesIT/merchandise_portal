@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, X } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface Product {
   name: string;
@@ -77,9 +78,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
           />
         </div>
         <div className="text-center">
-          <h2 className="text-lg font-medium text-gray-800 mb-2">{product.item_name}</h2>
-          <p className="text-xl font-semibold text-gray-700 mb-4">₹ {product.rate}</p>
-        </div>
+      <h2 className="text-lg font-medium mb-3">{product.item_name}</h2>
+      <div className="flex items-center justify-center gap-2 mb-3">
+        <span>Amount to be Paid Now</span>
+        <ArrowRight size={16} />
+        <span className="font-medium">₹ {product.rate}</span>
+      </div>
+    </div>
         <div className="flex justify-center">
           <CartButton isAddedToCart={isAddedToCart} handleCartClick={handleCartClick} isMobile={false} />
         </div>
@@ -100,12 +105,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
           <h2 className="text-sm font-medium text-gray-800 mb-1 max-w-full overflow-hidden">
             {product.item_name}
           </h2>
-          <div className="flex items-center gap-3">
-            <p className="text-lg font-semibold text-gray-700">₹ {product.rate}</p>
+          <div className="flex  gap-2 ">
+                        <span className='text-sm'>Amount to be Paid Now</span>
+                        </div>
+                        <p className="text-lg font-semibold text-gray-700">₹ {product.rate}</p>
             <CartButton isAddedToCart={isAddedToCart} handleCartClick={handleCartClick} isMobile={true} />
           </div>
         </div>
-      </div>
 
       {/* Image Modal */}
       <AnimatePresence>

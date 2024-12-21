@@ -14,6 +14,8 @@ import Footer from '@/app/components/footer';
 import { decrypt } from '@/app/action/enc';
 import Link from 'next/link';
 import AddressDropdown from '../components/addressdropdown';
+import { ArrowRight } from 'lucide-react';
+
 
 interface Product {
   id: number;
@@ -73,8 +75,8 @@ const CartItem: React.FC<{
 
         <div className="flex items-center border rounded-md">
           <button
-  onClick={() => onUpdateQuantity(product, -50)}
-  className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || product.quantity === 50 ? '' : ''}`}
+  onClick={() => onUpdateQuantity(product, -1)}
+  className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || product.quantity === 1 ? '' : ''}`}
 >
   <Minus size={16} />
 </button>
@@ -85,7 +87,7 @@ const CartItem: React.FC<{
             {product.quantity}
           </div>
           <button
-            onClick={() => onUpdateQuantity(product, 50)}
+            onClick={() => onUpdateQuantity(product, 1)}
             className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
 
             >
@@ -219,6 +221,7 @@ const CartPage: React.FC = () => {
   const [selectedAddress, setSelectedAddress] = useState<string>('');
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [showPaymentDetails, setShowPaymentDetails] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
     mode: '',
     reference: '',
@@ -437,6 +440,11 @@ const CartPage: React.FC = () => {
       setErrorMessage("Your cart is empty. Add items before proceeding.");
       return;
     }
+    setIsAnimating(true);
+    setTimeout(() => {
+      setIsAnimating(false);
+    }, 4000);
+
     setShowOrderSummary(true);
     setIsPaymentPlaced(true);
     setErrorMessage(null);
@@ -644,8 +652,17 @@ const CartPage: React.FC = () => {
                       </div>
 
                       <div className="flex justify-between items-center text-black font-semibold font-sans">
-                        <span>Subtotal:</span>
-                        <span className="text-xl md:text-2xl">
+                        <div className = 'flex gap-2'>
+                        <span>Amount to be Paid Now</span>
+                        <span className='mt-0.5'>
+                        <span className={`transition-all duration-300 transform ${
+            isAnimating ? 'translate-x-16 scale-x-150' : ''
+          }`}>
+            <ArrowRight size={18} strokeWidth={3} />
+          </span>
+                        </span>
+                        </div>
+                        <span className="text-xl">
                           ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
                         </span>
                       </div>

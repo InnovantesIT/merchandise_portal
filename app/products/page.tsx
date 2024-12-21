@@ -192,7 +192,7 @@ const Products = () => {
 
       await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
-        quantity: 50,
+        quantity: 1,
         
       }, {
         headers: {
