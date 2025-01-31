@@ -227,6 +227,8 @@ const CartPage: React.FC = () => {
     reference: '',
     amount: '',
     date: '',
+    contact_name: '', // New field for contact name
+    contact_phone: '', // New field for contact phone
   });
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [grandTotal, setGrandTotal] = useState<number>(0);
@@ -312,6 +314,8 @@ const CartPage: React.FC = () => {
         reference: '',
         amount: '0',
         date: new Date().toISOString().split('T')[0],
+        contact_name:'',
+        contact_phone:'',
       });
       setErrorMessage(null);
     }
@@ -452,7 +456,12 @@ const CartPage: React.FC = () => {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-  
+    {errorMessage && (
+      <p className="text-red-500 text-sm mt-2">
+        {errorMessage}
+      </p>
+    )}
+    
     if (cartItems.length === 0) {
       setErrorMessage("Your cart is empty. Add items before placing an order.");
       return;
@@ -460,12 +469,18 @@ const CartPage: React.FC = () => {
   
     if (!selectedAddress) {
       setErrorMessage("Please select a shipping address before placing the order.");
+      console.log("Error Set: Please select a shipping address before placing the order.");
+      return;
+    }
+
+    if (!paymentDetails.contact_name || !paymentDetails.contact_phone) {
+      setErrorMessage("Please fill in all details.");
       return;
     }
   
+  
     if (grandTotal > 0) {
-      // Validate payment details only if grandTotal is greater than zero
-      if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date) {
+      if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date || !paymentDetails.contact_name || !paymentDetails.contact_phone) {
         setErrorMessage("Please fill in all payment details.");
         return;
       }
@@ -493,6 +508,9 @@ const CartPage: React.FC = () => {
       reference_number: paymentDetails.reference,
       payment_date: paymentDetails.date,
       payment_mode: paymentDetails.mode,
+      contact_name: paymentDetails.contact_name, 
+      contact_phone: paymentDetails.contact_phone, 
+    
     };
   
     if (salesOrderData.line_items.length === 0) {
@@ -635,7 +653,10 @@ const CartPage: React.FC = () => {
                       </AnimatePresence>
                     </div>
                   </div>
+
+                  
                 )}
+
 
 
                 {!showOrderSummary && (
@@ -692,30 +713,64 @@ const CartPage: React.FC = () => {
               </div>
 
               {/* Order Summary Section */}
-              {showOrderSummary && (
-                <>
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5 }}
-                  >
-                    <OrderSummaryTable cartItems={cartItems} />
-                  </motion.div>
-                  {addresses.length > 0 && (
-        <div className="">
-          <label htmlFor="address-select" className="block text-2xl font-semibold mb-2">Shipping Details</label>
-          <AddressDropdown
-  options={addresses.map((address) => ({
-    value: address.address_id,
-    label: formatAddress(address),
-  }))}
-  selectedOption={selectedAddress}
-  onOptionSelect={(value) => setSelectedAddress(value)}
-  className="w-full p-2 mr-3 border rounded-md my-3"
-/>
+{showOrderSummary && (
+  <>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <OrderSummaryTable cartItems={cartItems} />
+    </motion.div>
 
-        </div>
-      )}
+   
+
+    <div className="space-y-2">
+      <label htmlFor="contactName" className="block text-sm font-medium text-black">Contact Name of the person at the Dealership *</label>
+      <input
+        type="text"
+        id="contactName"
+        name="contact_name"
+        placeholder="Enter contact name here"
+        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black mb-3"
+        value={paymentDetails.contact_name}
+        onChange={handleInputChange} // Reuse the existing change handler
+      />
+    </div>
+
+    <div className="space-y-2">
+      <label htmlFor="contactPhone" className="block text-sm font-medium text-black mt-2">Phone number of the contact person *</label>
+      <input
+        type="text"
+        id="contactPhone"
+        name="contact_phone"
+        placeholder="Enter contact phone here"
+        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+        value={paymentDetails.contact_phone}
+        onChange={handleInputChange} // Reuse the existing change handler
+      />
+    </div>
+
+    {addresses.length > 0 && (
+      <div className="">
+        <label htmlFor="address-select" className="block text-2xl font-semibold my-2">Shipping Details *</label>
+        <AddressDropdown
+          options={addresses.map((address) => ({
+            value: address.address_id,
+            label: formatAddress(address),
+          }))}
+          selectedOption={selectedAddress}
+          onOptionSelect={(value) => setSelectedAddress(value)}
+          className="w-full p-2 mr-3 border rounded-md my-3"
+        />
+      </div>
+    )}
+  
+  {errorMessage && (
+      <div className=" text-red-700">
+        <span className="block sm:inline">{errorMessage}</span>
+      </div>
+    )}
                   <AnimatePresence mode="wait">
                   {showPaymentDetails && isPaymentPlaced && grandTotal > 0 && (
                       <motion.div

@@ -9,12 +9,17 @@ import { History, Calendar, Search } from 'lucide-react';
 import { decrypt } from '@/app/action/enc';
 import Loader from '@/app/components/loader';
 
+
+
 interface Order {
   salesorder_id: string;
   salesorder_number: string;
   status: 'draft' | 'confirmed' | 'shipped'| 'fulfilled';
   date: string;
   cf_payment_details: string;
+  cf_name: string;  
+  cf_phone: string; 
+
 }
 
 interface LineItem {
@@ -50,6 +55,11 @@ interface ShippingAddress {
   phone?: string;
   state_code?: string;
 }
+interface CustomFieldHash
+{
+  cf_name: string;
+  cf_phone: string;
+}
 
 interface OrderDetailsModalProps {
   isOpen: boolean;
@@ -57,6 +67,9 @@ interface OrderDetailsModalProps {
   line_items: LineItem[];
   packages: Package[];
   shippingAddress: ShippingAddress | null;
+  contactName: string;  // Correctly added here
+  contactPhone: string; // Correctly added here
+
 }
 
 const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { delivery_date: string } | null }> = ({
@@ -66,6 +79,9 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
   packages = [],
   shipmentOrder,
   shippingAddress,
+  contactName,
+  contactPhone
+
   
 
 }) => {
@@ -117,6 +133,11 @@ const OrderDetailsModal: React.FC<OrderDetailsModalProps & { shipmentOrder: { de
         ) : (
           <p className="text-gray-600">No items to display.</p>
         )}
+<div className="flex gap-2 my-2">
+<p className="text-black text-md font-bold  text-sm">Contact Name of the person at the Dealership:</p><span className="text-gray-600 text-sm">{contactName}</span></div>
+<div className="flex gap-2 my-2">
+<p className="text-black text-md text-sm font-bold  ">Phone number of the contact person:</p><span className="text-gray-600 text-sm">{contactPhone}</span></div>
+
         {/* Shipping Address */}
 {shippingAddress ? (
   <div className="mb-4">
@@ -186,6 +207,9 @@ const OrderHistory: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedLineItems, setSelectedLineItems] = useState<LineItem[]>([]);
   const [shipmentDetails, setShipmentDetails] = useState<Package[]>([]);
+  const [contactName, setContactName] = useState<string>('');
+const [contactPhone, setContactPhone] = useState<string>('');
+
   const [shipmentOrder, setShipmentOrder] = useState<{ delivery_date: string } | null>(null);
   const [deliveryDetails,setDeliveryDetails]=useState<Package[]>([]);
   const [fromDate, setFromDate] = useState("");
@@ -255,7 +279,7 @@ const OrderHistory: React.FC = () => {
         return;
       }
   
-      const response = await axios.get<{ line_items: LineItem[], packages: Package[], shipment_order: { delivery_date: string }, shipping_address: ShippingAddress;}>(`${baseURL}/api/get-sales-order-details`, {
+      const response = await axios.get<{ line_items: LineItem[], packages: Package[], shipment_order: { delivery_date: string }, shipping_address: ShippingAddress; custom_field_hash:CustomFieldHash} >(`${baseURL}/api/get-sales-order-details`, {
         params: {
           id: salesorder_id,
         },
@@ -270,7 +294,9 @@ const OrderHistory: React.FC = () => {
         setShipmentOrder(response.data.shipment_order);
         setShipmentDetails(response.data.packages);
         setSelectedShippingAddress(response.data.shipping_address); // Set shipping address
-
+        setContactName(response.data.custom_field_hash.cf_name || '');
+        setContactPhone(response.data.custom_field_hash.cf_phone || '');
+  
         setIsModalOpen(true);
       } else {
         setError("Failed to fetch sales order details");
@@ -502,6 +528,9 @@ const OrderHistory: React.FC = () => {
   packages={shipmentDetails}
   shipmentOrder={shipmentOrder}
   shippingAddress={selectedShippingAddress}
+  contactName={contactName}
+  contactPhone={contactPhone}
+
 />
 
 

@@ -18,6 +18,12 @@ const { Option } = Select;
 
 const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
+interface CustomFieldHash
+{
+  cf_name: string;
+  cf_phone: string;
+}
+
 interface ShippingAddress {
   address: string;
   street2?: string;
@@ -40,6 +46,9 @@ interface Order {
   date: string;
   status: string;
   cf_payment_details: string;
+  cf_name: string;  
+  cf_phone: string; 
+
 }
 
 interface LineItem {
@@ -72,6 +81,8 @@ const OrderTable = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [startDate, setStartDate] = useState("");
   const [selectedDealer, setSelectedDealer] = useState('');
+  const [contactName, setContactName] = useState<string>('');
+  const [contactPhone, setContactPhone] = useState<string>('');
   const [dealerNames, setDealerNames] = useState<string[]>([]);
   const [endDate, setEndDate] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -93,6 +104,11 @@ const OrderTable = () => {
   useEffect(() => {
     const token = retrieveToken();
   
+    if (localStorage.role !== 'oem') {
+      router.push('/');
+      return;
+    }
+    
 
     if (!token) {
       router.push('/'); // Redirect to home page if the role is not "oem"
@@ -188,6 +204,9 @@ const OrderTable = () => {
         setIsModalOpen(true);
         setHighlightedOrderId(salesOrderId);
         setSelectedShippingAddress(response.data.shipping_address); // Set shipping address
+        setContactName(response.data.custom_field_hash.cf_name || '');
+        setContactPhone(response.data.custom_field_hash.cf_phone || '');
+
 
         
       } else {
@@ -451,6 +470,11 @@ const OrderTable = () => {
               ) : (
                 <p className="text-gray-600">No items to display.</p>
               )}
+
+<div className="flex gap-2 my-2">
+<p className="text-black text-md font-bold  text-sm">Contact Name of the person at the Dealership:</p><span className="text-gray-600 text-sm">{contactName}</span></div>
+<div className="flex gap-2 my-2">
+<p className="text-black text-md text-sm font-bold  ">Phone number of the contact person:</p><span className="text-gray-600 text-sm">{contactPhone}</span></div>
 
    {/* Shipping Address */}
    {selectedShippingAddress ? (
