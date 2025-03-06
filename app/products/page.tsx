@@ -192,7 +192,7 @@ const Products = () => {
 
       await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
-        quantity: 1,
+        quantity: 50,
         
       }, {
         headers: {
@@ -430,13 +430,14 @@ const Products = () => {
           className="max-w-screen relative my-8 px-4 sm:px-8 md:block hidden"
         >
           <motion.img
-            src={"img/Banner.jpg"}
-            alt="Welcome Banner"
-            className="w-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          />
+  src={"img/Banner.png"}
+  alt="Welcome Banner"
+  className="w-full object-cover"
+  initial={{ opacity: 0 }}
+  animate={{ opacity: 1 }}
+  transition={{ duration: 0.5 }}
+/>
+
 
           <div
             className="absolute inset-0 bg-gradient-to-r from-[#4C4D3ACC] to-[#313131CC] mx-4 sm:mx-8"

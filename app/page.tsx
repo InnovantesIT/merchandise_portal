@@ -12,7 +12,7 @@ export default function Login() {
   const [username, setUsername] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [leftBgColor, setLeftBgColor] = useState('#000000');
-  const [rightBgColor, setRightBgColor] = useState('#F6F8FD');
+  const [rightBgColor, setRightBgColor] = useState('#000000');
   const [errors, setErrors] = useState({ username: '', otp: '' });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isValid, setIsValid] = useState(false);
@@ -193,7 +193,8 @@ export default function Login() {
     return (
       <div className="flex justify-center items-center h-screen bg-white">
         <motion.img
-          src="/img/Renault_logo_Black.png"
+          src="/img/Topline Logo.png"
+          className = "w-40"
           alt="Loading"
           animate={{
             opacity: [0, 1, 0.6, 1, 0], // Slight variations in opacity for a smoother flicker
@@ -214,43 +215,18 @@ export default function Login() {
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     transition={{ duration: 0.5 }}
-    className="flex flex-col md:flex-row min-h-screen"
+    className="flex md:flex-row min-h-screen"
   >
-    <motion.div
-      initial={{ opacity: 0, x: -50 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ duration: 0.5 }}
-      className="w-full md:w-1/2 flex justify-center items-center"
-      style={{ backgroundColor: leftBgColor }}
-    >
-      <div className="text-center md:text-left">
-        <motion.img
-          initial={{ scale: 0, rotate: 0 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.8, type: 'spring' }}
-          src="/img/logo.png"
-          alt="Logo"
-          className="mx-auto mt-3 sm:mt-3 sm:mb-8 w-1/4 sm:w-36"
-        />
-        <motion.img
-          initial={{ y: 50, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
-          src="/img/car.png"
-          alt="Car"
-          className="mx-auto md:mx-0"
-        />
-      </div>
-    </motion.div>
+    
 
     <motion.div
       initial={{ opacity: 0, x: 50 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.5 }}
-      className="w-full md:w-1/2 flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-24"
+      className="w-full  flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-16"
       style={{ backgroundColor: rightBgColor }}
     >
-      <h1 className="text-3xl absolute top-24 items-center tracking-wider font-sans font-light ">Welcome!</h1>
+      <h1 className="sm:text-3xl text-xl absolute sm:top-28 top-56 items-center tracking-wider text-white justify-center font-sans font-light ">Welcome to Topline Ordering Portal</h1>
       <div className="text-center mb-4 text-lg font-sans font-semibold">
       </div>
   
@@ -258,7 +234,7 @@ export default function Login() {
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4, duration: 0.5 }}
-        className="bg-white p-10 rounded-lg shadow-lg w-full max-w-sm relative flex items-center"
+        className="bg-white p-10 rounded-lg shadow-lg w-full max-w-md max-h-md relative flex items-center"
       >
         <AnimatePresence mode="wait">
           <motion.form

@@ -75,7 +75,7 @@ const CartItem: React.FC<{
 
         <div className="flex items-center border rounded-md">
           <button
-  onClick={() => onUpdateQuantity(product, -1)}
+  onClick={() => onUpdateQuantity(product, -50)}
   className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || product.quantity === 1 ? '' : ''}`}
 >
   <Minus size={16} />
@@ -87,7 +87,7 @@ const CartItem: React.FC<{
             {product.quantity}
           </div>
           <button
-            onClick={() => onUpdateQuantity(product, 1)}
+            onClick={() => onUpdateQuantity(product, 50)}
             className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
 
             >
