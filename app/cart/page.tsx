@@ -75,7 +75,7 @@ const CartItem: React.FC<{
 
         <div className="flex items-center border rounded-md">
           <button
-  onClick={() => onUpdateQuantity(product, -50)}
+  onClick={() => onUpdateQuantity(product, -1)}
   className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || product.quantity === 1 ? '' : ''}`}
 >
   <Minus size={16} />
@@ -87,7 +87,7 @@ const CartItem: React.FC<{
             {product.quantity}
           </div>
           <button
-            onClick={() => onUpdateQuantity(product, 50)}
+            onClick={() => onUpdateQuantity(product, 1)}
             className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''}`}
 
             >
@@ -167,7 +167,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
             })}
 
             {/* Total Shipping charge row */}
-            <tr className="bg-gray-50">
+            {/* <tr className="bg-gray-50">
               <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -181,10 +181,10 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <td className="border border-gray-300 p-2 text-center">
                 ₹{(cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18).toFixed(2)}
               </td>
-            </tr>
+            </tr> */}
 
             {/* Total Packaging charge row */}
-             <tr className="bg-white">
+             {/* <tr className="bg-white">
               <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -198,13 +198,16 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <td className="border border-gray-300 p-2 text-center">
                 ₹{(cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}
               </td>
-            </tr>  
+            </tr>   */}
           </tbody>
         </table>
       </div>
       <div className="mt-4 text-right my-3">
         <p className="text-xl font-bold">
-        {/* Grand Total: <span className="text-2xl">₹{(grandTotal  + cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18 ).toFixed(2)}</span> */}
+        Grand Total: <span className="text-2xl">₹{(grandTotal.toFixed(2))}</span>
+        {/* grand total including shipping and packing charges */}
+          {/* Grand Total: <span className="text-2xl">₹{(grandTotal  + cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0) * 1.18 + cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18 ).toFixed(2)}</span> */}
+
 
         </p>
       </div>
@@ -672,16 +675,9 @@ const CartPage: React.FC = () => {
                         <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
                       </div>
 
-                      <div className="flex justify-between items-center text-black font-semibold font-sans">
-                        <div className = 'flex gap-2'>
+                      <div className="flex  gap-3  flex-wrap items-center text-black font-semibold font-sans">
+                        <div className = 'flex gap-1'>
                         <span>Amount to be Paid Now</span>
-                        <span className='mt-0.5'>
-                        <span className={`transition-all duration-300 transform ${
-            isAnimating ? 'translate-x-16 scale-x-150' : ''
-          }`}>
-            <ArrowRight size={18} strokeWidth={3} />
-          </span>
-                        </span>
                         </div>
                         <span className="text-xl">
                           ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}

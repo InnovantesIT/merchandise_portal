@@ -27,13 +27,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [quantity, setQuantity] = useState(product.quantity);
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.jpg');
+  const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.png');
   const router = useRouter();
 
   useEffect(() => {
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
-    setImageSrc(product.image_name || 'img/defaultcard.jpg');
+    setImageSrc(product.image_name || 'img/defaultcard.png');
   }, [product]);
 
   const handleCartClick = () => {
@@ -56,12 +56,12 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setImageSrc('img/defaultcard.jpg');
+    setImageSrc('img/defaultcard.png');
   };
 
   return (
     <motion.div
-      className="card bg-white border border-gray-200 shadow-sm rounded-lg sm:p-4 p-6 max-w-2xl overflow-hidden hover:shadow-md transition-shadow duration-300 "
+      className=" card bg-white border border-gray-200 shadow-sm rounded-lg sm:p-4 p-6 max-w-2xl overflow-hidden hover:shadow-md transition-shadow duration-300 "
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}

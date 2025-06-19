@@ -52,7 +52,7 @@ const Products = () => {
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [firstName, setFirstName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(50); 
+  const [productsPerPage] = useState(20); 
   const [isLoading, setIsLoading] = useState(true);
 
 
@@ -192,7 +192,7 @@ const Products = () => {
 
       await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
-        quantity: 50,
+        quantity: 1,
         
       }, {
         headers: {
@@ -293,10 +293,13 @@ const Products = () => {
     toggleFilterDrawer();
   };
 
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products
+  .filter(product =>
     selectedFilters.size === 0 || selectedFilters.has(product.group_id)
-  ).sort((a, b) => a.group_name.localeCompare(b.group_name));
-
+  )
+  .sort((a, b) =>
+    selectedFilters.size > 0 ? a.group_name.localeCompare(b.group_name) : 0
+  );
 
   const pageTitle = selectedFilters.size
     ? `Products - ${Array.from(selectedFilters).map(groupId => 
@@ -398,6 +401,7 @@ const Products = () => {
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
   const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
