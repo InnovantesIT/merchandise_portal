@@ -400,9 +400,13 @@ const Products = () => {
   const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
   const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
 
-  const paginate = (pageNumber: number) => setCurrentPage(pageNumber);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+  
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
   const pageNumbers = [];
