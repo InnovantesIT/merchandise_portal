@@ -99,19 +99,19 @@ const CartItem: React.FC<{
       <div className="mt-4 w-full overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            {/* <tr className="bg-gray-100">
-              <th className="p-2 text-left">HSN Code</th> */}
-              {/* <th className="p-2 text-left">Unit Price</th>
+            <tr className="bg-gray-100">
+              <th className="p-2 text-left">HSN Code</th> 
+               <th className="p-2 text-left">Unit Price</th>
               <th className="p-2 text-left">Tax (%)</th>
-              <th className="p-2 text-left">Subtotal</th> */}
-            {/* </tr> */}
+              <th className="p-2 text-left">Subtotal</th> 
+            </tr> 
           </thead>
           <tbody>
             <tr>
-              {/* <td className="p-2">{product.hsn_or_sac}</td> */}
-              {/* <td className="p-2">₹{product.rate.toFixed(2)}</td>
+              <td className="p-2">{product.hsn_or_sac}</td> 
+              <td className="p-2">₹{product.rate.toFixed(2)}</td>
               <td className="p-2">{product.tax_percentage}%</td>
-              <td className="p-2">₹{product.sub_total.toFixed(2)}</td> */}
+              <td className="p-2">₹{product.sub_total.toFixed(2)}</td>
             </tr>
           </tbody>
         </table>
@@ -141,10 +141,10 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <th className="border border-gray-300 p-2">Product Name</th>
               <th className="border border-gray-300 p-2">HSN</th>
               <th className="border border-gray-300 p-2">Qty</th>
-              {/* <th className="border border-gray-300 p-2">Unit Price</th>
+              <th className="border border-gray-300 p-2">Unit Price</th>
               <th className="border border-gray-300 p-2">Subtotal</th>
               <th className="border border-gray-300 p-2">Tax</th>
-              <th className="border border-gray-300 p-2">Total</th> */}
+              <th className="border border-gray-300 p-2">Total</th> 
             </tr>
           </thead>
           <tbody>
@@ -158,16 +158,16 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
                   <td className="border border-gray-300 p-2 text-center">{item.item_name}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.hsn_or_sac}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.quantity}</td>
-                  {/* <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
+                   <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">₹{subtotal.toFixed(2)}</td>
                   <td className="border border-gray-300 p-2 text-center">{item.tax_percentage}%</td>
-                  <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td> */}
+                  <td className="border border-gray-300 p-2 text-center">₹{total.toFixed(2)}</td> 
                 </tr>
               );
             })}
 
             {/* Total Shipping charge row */}
-            {/* <tr className="bg-gray-50">
+            <tr className="bg-gray-50">
               <td className="border border-gray-300 p-2 text-center">Freight Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -184,7 +184,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
             </tr>
 
             {/* Total Packaging charge row */}
-            {/* <tr className="bg-white">
+             <tr className="bg-white">
               <td className="border border-gray-300 p-2 text-center">Packing Charges</td>
               <td className="border border-gray-300 p-2 text-center"></td>
               <td className="border border-gray-300 p-2 text-center">1</td>
@@ -198,7 +198,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[] }> = ({ cartItems }) =>
               <td className="border border-gray-300 p-2 text-center">
                 ₹{(cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0) * 1.18).toFixed(2)}
               </td>
-            </tr>  */}
+            </tr>  
           </tbody>
         </table>
       </div>
@@ -342,11 +342,11 @@ const CartPage: React.FC = () => {
     }, 0);
     const total = subtotal + tax;
 
-    // const totalShipping = cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0);
-    // const totalShippingWithTax = totalShipping * 1.18;
+     const totalShipping = cartItems.reduce((totalShipping, item) => totalShipping + (item.rate * item.quantity * 0.10), 0);
+    const totalShippingWithTax = totalShipping * 1.18;
 
-    // const totalPackaging = cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0);
-    // const totalPackagingWithTax = totalPackaging * 1.18;
+    const totalPackaging = cartItems.reduce((totalPackaging, item) => totalPackaging + (item.rate * item.quantity * 0.15), 0);
+   const totalPackagingWithTax = totalPackaging * 1.18;
 
     return total ;
   };

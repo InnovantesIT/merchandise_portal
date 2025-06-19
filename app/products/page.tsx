@@ -109,7 +109,7 @@ const Products = () => {
         const response = await axios.get(`${baseURL}/api/products`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            brand: 'renault',
+            brand: 'Renault',
           },
         });
     
@@ -152,7 +152,7 @@ const Products = () => {
         const response = await axios.get(`${baseURL}/api/product-categories`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            brand: 'renault',
+            brand: 'Renault',
           },
         });
         

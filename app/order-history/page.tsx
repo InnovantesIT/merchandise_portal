@@ -250,7 +250,7 @@ const [contactPhone, setContactPhone] = useState<string>('');
         const response = await axios.get<Order[]>(`${baseURL}/api/get-sales-orders`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            brand: 'renault',
+            brand: 'Renault',
           },
         });
         setOrders(response.data);

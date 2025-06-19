@@ -121,7 +121,7 @@ const OrderTable = () => {
         const response = await axios.get(`${baseURL}/api/get-sales-orders`, {
           headers: {
             Authorization: `Bearer ${token}`,
-            brand: 'renault',
+            brand: 'Renault',
           },
         });
         
