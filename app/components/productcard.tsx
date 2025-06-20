@@ -27,13 +27,13 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [quantity, setQuantity] = useState(product.quantity);
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.png');
+  const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.jpg');
   const router = useRouter();
 
   useEffect(() => {
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
-    setImageSrc(product.image_name || 'img/defaultcard.png');
+    setImageSrc(product.image_name || 'img/defaultcard.jpg');
   }, [product]);
 
   const handleCartClick = () => {
@@ -56,7 +56,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const closeModal = () => setIsModalOpen(false);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    setImageSrc('img/defaultcard.png');
+    setImageSrc('img/defaultcard.jpg');
   };
 
   return (

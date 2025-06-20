@@ -8,7 +8,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Header from "@/app/components/header";
 import { motion } from "framer-motion";
 import { RiCloseLine } from "react-icons/ri";
-import { SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal, Search, X } from 'lucide-react';
 import { UserContext } from "@/app/context/usercontext"; 
 import { useRouter } from 'next/navigation';
 import { ShoppingCart } from 'lucide-react';
@@ -16,19 +16,21 @@ import Link  from 'next/link';
 import Footer from '@/app/components/footer';
 import { decrypt } from '@/app/action/enc';
 import Loader from '@/app/components/loader'
+
 interface Product {
   name: string;
-  rate: number;
   item_name: string;
+  group_name: string;
+  rate: number;
   image_name: string;
   image_path: string;
   quantity: number;
   category?: string;
   customer_id: number;
   item_id: string;
-  group_name: string;
   group_id: string;
 }
+
 
 interface ProductGroup {
   group_id: string;
@@ -54,7 +56,7 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [productsPerPage] = useState(20); 
   const [isLoading, setIsLoading] = useState(true);
-
+  const [searchTerm, setSearchTerm] = useState('');
 
   
   const retrieveToken = () => {
@@ -141,7 +143,7 @@ const Products = () => {
     
 
     fetchProducts();
-  }, [baseURL]);
+  }, [baseURL, router]);
 
   useEffect(() => {
     const fetchProductGroups = async () => {
@@ -178,7 +180,7 @@ const Products = () => {
     };
 
     fetchProductGroups();
-  }, [baseURL]);
+  }, [baseURL, router]);
 
   const handleAddToCart = async (product: Product) => {
     if (!customerId) {
@@ -293,13 +295,29 @@ const Products = () => {
     toggleFilterDrawer();
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setCurrentPage(1);
+  };
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setCurrentPage(1);
+  };
+
   const filteredProducts = products
-  .filter(product =>
-    selectedFilters.size === 0 || selectedFilters.has(product.group_id)
-  )
-  .sort((a, b) =>
-    selectedFilters.size > 0 ? a.group_name.localeCompare(b.group_name) : 0
-  );
+    .filter(product => {
+      const matchesFilter = selectedFilters.size === 0 || selectedFilters.has(product.group_id);
+      const matchesSearch = searchTerm === '' || searchTerm.length < 3 || 
+        (product.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
+        (product.group_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      
+      return matchesFilter && matchesSearch;
+    })
+    .sort((a, b) =>
+      selectedFilters.size > 0 ? (a.group_name || '').localeCompare(b.group_name || '') : 0
+    );
 
   const pageTitle = selectedFilters.size
     ? `Products - ${Array.from(selectedFilters).map(groupId => 
@@ -415,7 +433,6 @@ const Products = () => {
   }
 
   return (
-
     <div className="min-h-screen bg-white">
       <Head>
         <meta
@@ -446,7 +463,6 @@ const Products = () => {
   transition={{ duration: 0.5 }}
 />
 
-
           <div
             className="absolute inset-0 bg-gradient-to-r from-[#4C4D3ACC] to-[#313131CC] mx-4 sm:mx-8"
             style={{ clipPath: 'inset(0 0 0 0)', zIndex: 1 }}
@@ -465,6 +481,46 @@ const Products = () => {
         </motion.div>
 
         <div className="px-4 md:px-6 lg:px-10">
+          {/* Search Bar */}
+          <div className=""></div>
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="mb-6 sm:justify-end justify-start flex"
+          >
+            <div className="relative max-w-md mx-auto lg:mx-0">
+              <div className="relative sm:my-0 my-3">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-10 py-3 my-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent bg-white shadow-sm"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+              {searchTerm && searchTerm.length >= 3 && (
+                <div className="mt-2 text-sm text-gray-600">
+                  {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found for &ldquo;{searchTerm}&rdquo;
+                </div>
+              )}
+              {searchTerm && searchTerm.length > 0 && searchTerm.length < 3 && (
+                <div className="mt-2 text-sm text-gray-500">
+                  Type at least 3 characters to search
+                </div>
+              )}
+            </div>
+          </motion.div>
+
           <div className="flex flex-col lg:flex-row md:flex-row mt-4 sm:gap-6 gap-4 ">
             {isMobile ? (
               <>
@@ -542,6 +598,22 @@ const Products = () => {
   </div>
 </Link>
               </div>
+              
+              {/* No results message */}
+              {!isLoading && filteredProducts.length === 0 && searchTerm.length >= 3 && (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 text-lg mb-4">
+                    No products found for &ldquo;{searchTerm}&rdquo;
+                  </div>
+                  <button
+                    onClick={clearSearch}
+                    className="text-[#EFDF00] hover:underline"
+                  >
+                    Clear search
+                  </button>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
   {isLoading ? (
         <div className="flex items-center justify-center h-full mx-auto">
@@ -566,7 +638,7 @@ const Products = () => {
 </div>
 
               {/* Pagination */}
-{!isLoading && (
+{!isLoading && filteredProducts.length > 0 && (
   <div className="flex justify-center items-center space-x-2 my-8">
     <button
       onClick={() => paginate(currentPage - 1)}

@@ -787,9 +787,9 @@ const CartPage: React.FC = () => {
                             <div className="sm:text-sm text-lg text-gray-600 sm:shadow-none flex-grow">
                               <h3 className="font-semibold text-lg mb-3 text-black">Our Bank Details</h3>
                               <span className="font-semibold">Topline Print Media</span>
-                              <p><span className="font-semibold">Bank:</span> HDFC Bank</p>
-                              <p><span className="font-semibold">Account No.:</span> 000000000000</p>
-                              <p><span className="font-semibold">IFSC:</span> HDFC0000000</p>
+                              <p><span className="font-semibold">Bank:</span> Kotak Mahindra Bank</p>
+                              <p><span className="font-semibold">Account No.:</span> 06772000004324</p>
+                              <p><span className="font-semibold">IFSC:</span> KKBK0000217</p>
                             </div>
 
                             <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
