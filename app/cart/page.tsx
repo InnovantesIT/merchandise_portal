@@ -439,7 +439,7 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const paymentOptions = ['NEFT', 'RTGS', 'IMPS', 'UPI'];
+  const paymentOptions = ['NETBANKING'];
   const pageTitle = "Orders";
 
   const handleProceed = () => {
@@ -828,14 +828,14 @@ const CartPage: React.FC = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <label htmlFor="reference" className="block text-sm font-medium text-gray-700">Reference Number</label>
+                            <label htmlFor="reference" className="block text-sm font-medium text-gray-700">UTR Number</label>
                             <div className="flex items-center">
                               <Hash className="text-gray-400 mr-2" />
                               <input
                                 type="text"
                                 id="reference"
                                 name="reference"
-                                placeholder="Enter reference here"
+                                placeholder="Enter UTR Number"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                                 value={paymentDetails.reference}
                                 onChange={handleInputChange}
