@@ -786,7 +786,7 @@ const CartPage: React.FC = () => {
                           <div className="mb-2 flex flex-col md:flex-row items-center md:items-start gap-8">
                             <div className="sm:text-sm text-lg text-gray-600 sm:shadow-none flex-grow">
                               <h3 className="font-semibold text-lg mb-3 text-black">Our Bank Details</h3>
-                              <span className="font-semibold">Topline Print Media</span>
+                              <span className="font-semibold">Topline Print Media Private Limited</span>
                               <p><span className="font-semibold">Bank:</span> Kotak Mahindra Bank</p>
                               <p><span className="font-semibold">Account No.:</span> 06772000004324</p>
                               <p><span className="font-semibold">IFSC:</span> KKBK0000217</p>
