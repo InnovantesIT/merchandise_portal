@@ -10,7 +10,7 @@ npm run dev
 # orss
 yarn devjkrefd
 # or
-pnpm dev
+pnpm deveee
 # orerd
 bun dev
 ff
