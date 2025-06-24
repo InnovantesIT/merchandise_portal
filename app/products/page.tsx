@@ -108,7 +108,7 @@ const Products = () => {
         const token = retrieveToken();
         if (!token) throw new Error("Token is missing");
     
-        const response = await axios.get(`${baseURL}/api/products`, {
+        const response = await axios.get(`${baseURL}/api/products?brand=Renault`, {
           headers: {
             Authorization: `Bearer ${token}`,
             brand: 'Renault',

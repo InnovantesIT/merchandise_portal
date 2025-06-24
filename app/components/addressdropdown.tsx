@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { RiArrowDropDownLine } from "react-icons/ri";
+import { Plus } from "lucide-react";
 
 interface DropdownOption {
   value: string;
@@ -10,6 +11,7 @@ interface DropdownProps {
   options: DropdownOption[];
   selectedOption: string;
   onOptionSelect: (value: string) => void;
+  onAddNewAddress: () => void;
   className?: string;
 }
 
@@ -17,6 +19,7 @@ const AddressDropdown: React.FC<DropdownProps> = ({
   options,
   selectedOption,
   onOptionSelect,
+  onAddNewAddress,
   className,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,6 +29,11 @@ const AddressDropdown: React.FC<DropdownProps> = ({
 
   const handleOptionSelect = (value: string) => {
     onOptionSelect(value);
+    setIsOpen(false);
+  };
+
+  const handleAddNewAddress = () => {
+    onAddNewAddress();
     setIsOpen(false);
   };
 
@@ -67,6 +75,13 @@ const AddressDropdown: React.FC<DropdownProps> = ({
               {option.label}
             </li>
           ))}
+          <li
+            className="p-2 hover:bg-gray-100 cursor-pointer border-t border-gray-200 flex items-center gap-2 text-blue-600 font-medium"
+            onClick={handleAddNewAddress}
+          >
+            <Plus size={16} />
+            Add new address
+          </li>
         </ul>
       )}
     </div>

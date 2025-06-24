@@ -15,6 +15,7 @@ import { decrypt } from '@/app/action/enc';
 import Link from 'next/link';
 import AddressDropdown from '../components/addressdropdown';
 import { ArrowRight } from 'lucide-react';
+import AddressModal from '../components/addressmodal';
 
 
 interface Product {
@@ -46,7 +47,15 @@ interface Address {
   tax_info_id: string;
 }
 
-
+interface CustomShippingAddress {
+  attention: string;
+  address: string;
+  country: string;
+  city: string;
+  state: string;
+  zip: string;
+  phone: string;
+}
 
 const CartItem: React.FC<{
   product: Product;
@@ -236,6 +245,11 @@ const CartPage: React.FC = () => {
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  const [selectedAddressForEdit, setSelectedAddressForEdit] = useState<Address | null>(null);
+  const [isNewAddress, setIsNewAddress] = useState(false);
+  const [customShippingAddress, setCustomShippingAddress] = useState<CustomShippingAddress | null>(null);
+  const [useCustomAddress, setUseCustomAddress] = useState(false);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
 
@@ -439,7 +453,7 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const paymentOptions = ['NETBANKING'];
+  const paymentOptions = ['NET BANKING'];
   const pageTitle = "Orders";
 
   const handleProceed = () => {
@@ -457,6 +471,33 @@ const CartPage: React.FC = () => {
     setErrorMessage(null);
   };
 
+  const handleAddressSelect = (addressId: string) => {
+    setSelectedAddress(addressId);
+    const address = addresses.find(addr => addr.address_id === addressId);
+    if (address) {
+      setSelectedAddressForEdit(address);
+      setIsNewAddress(false);
+      setShowAddressModal(true);
+    }
+  };
+
+  const handleAddNewAddress = () => {
+    setSelectedAddressForEdit(null);
+    setIsNewAddress(true);
+    setShowAddressModal(true);
+  };
+
+  const handleAddressConfirm = (address: CustomShippingAddress, isModified: boolean) => {
+    if (isModified) {
+      setCustomShippingAddress(address);
+      setUseCustomAddress(true);
+      setSelectedAddress('0'); // Set to 0 to indicate custom address
+    } else {
+      setUseCustomAddress(false);
+      setCustomShippingAddress(null);
+    }
+  };
+
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     {errorMessage && (
@@ -470,9 +511,8 @@ const CartPage: React.FC = () => {
       return;
     }
   
-    if (!selectedAddress) {
+    if (!selectedAddress && !useCustomAddress) {
       setErrorMessage("Please select a shipping address before placing the order.");
-      console.log("Error Set: Please select a shipping address before placing the order.");
       return;
     }
 
@@ -498,9 +538,8 @@ const CartPage: React.FC = () => {
     const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
     const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
   
-    const salesOrderData = {
+    const salesOrderData: any = {
       salesorder_number: salesOrderNumber,
-      shipping_address_id: selectedAddress, 
       line_items: cartItems.map((item) => ({
         item_id: item.item_id,
         name: item.item_name,
@@ -511,11 +550,18 @@ const CartPage: React.FC = () => {
       reference_number: paymentDetails.reference,
       payment_date: paymentDetails.date,
       payment_mode: paymentDetails.mode,
-      contact_name: paymentDetails.contact_name, 
-      contact_phone: paymentDetails.contact_phone, 
-    
+      contact_name: paymentDetails.contact_name,
+      contact_phone: paymentDetails.contact_phone,
     };
-  
+
+    // Add shipping address logic
+    if (useCustomAddress && customShippingAddress) {
+      salesOrderData.shipping_address_id = 0;
+      salesOrderData.custom_shipping_address = customShippingAddress;
+    } else {
+      salesOrderData.shipping_address_id = selectedAddress;
+    }
+
     if (salesOrderData.line_items.length === 0) {
       setErrorMessage('No items in the cart to place an order.');
       return;
@@ -756,13 +802,25 @@ const CartPage: React.FC = () => {
             label: formatAddress(address),
           }))}
           selectedOption={selectedAddress}
-          onOptionSelect={(value) => setSelectedAddress(value)}
+          onOptionSelect={handleAddressSelect}
+          onAddNewAddress={handleAddNewAddress}
           className="w-full p-2 mr-3 border rounded-md my-3"
         />
       </div>
     )}
-  
-  {errorMessage && (
+
+    {/* Display selected address info */}
+    {useCustomAddress && customShippingAddress && (
+      <div className="bg-gray-50 p-4 rounded-lg mt-4">
+        <h3 className="font-semibold mb-2"> Shipping Address:</h3>
+        <p>{customShippingAddress.address}</p>
+        <p>{customShippingAddress.city}, {customShippingAddress.state} {customShippingAddress.zip}</p>
+        <p>{customShippingAddress.country}</p>
+        {customShippingAddress.phone && <p>Phone: {customShippingAddress.phone}</p>}
+      </div>
+    )}
+
+    {errorMessage && (
       <div className=" text-red-700">
         <span className="block sm:inline">{errorMessage}</span>
       </div>
@@ -897,6 +955,13 @@ const CartPage: React.FC = () => {
         </div>
       </div>
       <Footer />
+      <AddressModal
+        isOpen={showAddressModal}
+        onClose={() => setShowAddressModal(false)}
+        onConfirm={handleAddressConfirm}
+        selectedAddress={selectedAddressForEdit}
+        isNewAddress={isNewAddress}
+      />
     </div>
   );
 };
