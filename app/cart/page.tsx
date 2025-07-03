@@ -16,6 +16,7 @@ import Link from 'next/link';
 import AddressDropdown from '../components/addressdropdown';
 import { ArrowRight } from 'lucide-react';
 import AddressModal from '../components/addressmodal';
+import { IndianRupee } from 'lucide-react';
 
 
 interface Product {
@@ -709,47 +710,50 @@ const CartPage: React.FC = () => {
 
 
                 {!showOrderSummary && (
-                  <div className="md:w-1/2 lg:w-1/3 mt-6 md:mt-0">
-                    <motion.div
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.5 }}
-                      className="bg-white rounded-lg shadow-lg border p-4 md:p-6 mb-4 md:mb-6"
-                    >
-                      <div className="flex gap-2 md:gap-3">
-                        <BsHandbag className="mt-1 font-semibold font-sans" />
-                        <h2 className="text-md md:text-lg font-semibold font-sans mb-4">Products added to cart</h2>
-                      </div>
+                      <div className="md:w-1/2 lg:w-1/3 mt-6 md:mt-0">
+      <motion.div
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white border rounded-lg shadow-lg p-4 md:p-6 mb-6"
+      >
+        <header className="flex items-center gap-2 md:gap-3 mb-2">
+          <h2 className="text-base font-semibold font-sans text-gray-800">
+          <span>Amount to be Paid Now</span>
+          </h2>
+        </header>
 
-                      <div className="flex  gap-3  flex-wrap items-center text-black font-semibold font-sans">
-                        <div className = 'flex gap-1'>
-                        <span>Amount to be Paid Now</span>
-                        </div>
-                        <span className="text-xl">
-                          ₹ {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
+          <span className = "text-gray-500 text-sm mb-2">
+            Total Price
+          </span>
+            
+        <div className="flex items-center flex-wrap gap-2 text-black font-semibold mb-4">
+          <span className="text-xl flex items-center gap-2">
+          <IndianRupee size={20} /> {cartItems.reduce((total, item) => total + item.sub_total, 0).toFixed(2)}
                         </span>
-                      </div>
+          </div>
+          <button
+  onClick={handleProceed}
 
-                      <button
-                        onClick={handleProceed}
-                        className={`mt-4 w-full py-2 px-4 rounded-md transition duration-300 ${
-                          cartItems.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black text-white'
-                        }`}
-                      >
-                        Proceed
-                      </button>
+  className={`mt-2 w-full py-2 px-4 rounded-md font-sans  hover:scale-105 hover:shadow-lg hover:bg-white hover:border-black border-2 border-gray-50 hover:text-black tracking-wider transition duration-300 ${
+    cartItems.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black text-white'
+  }`}
+  disabled={cartItems.length === 0} // ensure the button is disabled when cartItems is empty
+>
+  Proceed
+</button>
+        {errorMessage && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="mt-2 text-red-500 text-sm"
+          >
+            {errorMessage}
+          </motion.p>
+        )}
+      </motion.div>
 
-                      {errorMessage && (
-                        <motion.p
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          className="text-red-500 text-sm mt-2"
-                        >
-                          {errorMessage}
-                        </motion.p>
-                      )}
-                    </motion.div>
                   </div>
                 )}
               </div>
@@ -939,7 +943,7 @@ const CartPage: React.FC = () => {
           type="button"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="w-full sm:w-auto px-8 py-3 my-4 bg-black text-white font-bold font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
+          className="w-full sm:w-auto px-8 py-3 my-4 bg-black text-white  hover:bg-white hover:text-black border-2 border-gray-50  hover:border-black font-normal tracking-wider font-sans rounded-lg shadow-lg transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-50"
           onClick={handlePlaceOrder}
         >
           Place Order

@@ -54,7 +54,7 @@ const Products = () => {
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [firstName, setFirstName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(20); 
+  const [productsPerPage] = useState(25); 
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -457,23 +457,23 @@ const Products = () => {
           <motion.img
   src={"img/Banner.png"}
   alt="Welcome Banner"
-  className="w-full object-cover"
+  className="w-full object-cover h-20 rounded-lg"
   initial={{ opacity: 0 }}
   animate={{ opacity: 1 }}
   transition={{ duration: 0.5 }}
 />
 
           <div
-            className="absolute inset-0 bg-gradient-to-r from-[#4C4D3ACC] to-[#313131CC] mx-4 sm:mx-8"
+            className="absolute inset-0 bg-gradient-to-r to-[#414141] from-[#3c3c3c]   mx-4 sm:mx-8 rounded-lg"
             style={{ clipPath: 'inset(0 0 0 0)', zIndex: 1 }}
           ></div>
 
-          <div className="absolute inset-0 flex items-center ml-10 sm:ml-20 z-10">
+          <div className="absolute inset-0 flex items-center ml-10  z-10 rounded-lg">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-white text-lg font-sans sm:text-2xl sm:px-6 md:px-8 lg:text-3xl lg:px-10 px-4 font-bold"
+              className="text-white text-lg font-sans sm:text-xl sm:px-6 md:px-8 lg:text-2xl lg:px-10 px-4  tracking-wider font-normal"
             >
               Hi {firstName || "Guest"}. Welcome Back!
             </motion.div>

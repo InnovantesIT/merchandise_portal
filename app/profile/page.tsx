@@ -4,7 +4,8 @@ import axios from 'axios';
 import Header from '@/app/components/header';
 import { useRouter } from 'next/navigation';
 import { decrypt } from '@/app/action/enc';
-import { Edit } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Edit, Mail, Phone, MapPin, CreditCard, Building } from 'lucide-react';
 
 type BillingAddress = {
   address_id?: string;
@@ -22,6 +23,16 @@ type BillingAddress = {
   fax?: string;
 };
 
+const FieldRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+  <div className="flex items-start gap-3">
+    <div className="text-gray-500 mt-1">{icon}</div>
+    <div>
+      <span className="block text-sm font-medium text-gray-600">{label}</span>
+      <p className="text-gray-800 font-sans">{value || '--'}</p>
+    </div>
+  </div>
+);
+
 function ProfilePage() {
   const [email, setEmail] = useState('');
   const [editableEmail, setEditableEmail] = useState('');
@@ -33,14 +44,13 @@ function ProfilePage() {
   const [billingAddress, setBillingAddress] = useState<BillingAddress>({});
   const [loading, setLoading] = useState(true);
   const [showOtpInput, setShowOtpInput] = useState(false);
+  const [serverOtp, setServerOtp] = useState('');
   const router = useRouter();
 
   const retrieveToken = () => {
     if (typeof window !== 'undefined') {
       const encryptedToken = localStorage.getItem('token');
-      if (encryptedToken) {
-        return decrypt(encryptedToken);
-      }
+      return encryptedToken ? decrypt(encryptedToken) : null;
     }
     return null;
   };
@@ -54,22 +64,17 @@ function ProfilePage() {
 
     const fetchUserDetails = async () => {
       try {
-        const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-details`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            brand: 'renault',
-          }
+        const { data } = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/user-details`, {
+          headers: { Authorization: `Bearer ${token}`, brand: 'renault' },
         });
-        if (response.data) {
-          const data = response.data;
-          setName(data.company_name);
-          setEmail(data.email);
-          setMobile(data.phone);
-          setGST(data.gst_no);
-          setBillingAddress(data.billing_address || {});
-        }
-      } catch (error) {
-        console.error('Failed to fetch user details:', error);
+
+        setName(data.company_name);
+        setEmail(data.email);
+        setMobile(data.phone);
+        setGST(data.gst_no);
+        setBillingAddress(data.billing_address || {});
+      } catch (err) {
+        console.error('Failed to fetch user details:', err);
       } finally {
         setLoading(false);
       }
@@ -78,21 +83,68 @@ function ProfilePage() {
     fetchUserDetails();
   }, [router]);
 
-  const formatAddress = () => {
-    return `${billingAddress.address || ''}, ${billingAddress.city || ''}, ${billingAddress.state || ''} ${billingAddress.zip || ''}, ${billingAddress.country || ''}`;
-  };
+  const formatAddress = () =>
+    [billingAddress.address, billingAddress.city, billingAddress.state, billingAddress.zip, billingAddress.country]
+      .filter(Boolean)
+      .join(', ');
 
   const handleEditClick = () => {
     setEditableEmail(email);
     setIsEditing(true);
   };
 
-  const handleEmailChange = (event: any) => {
-    setEditableEmail(event.target.value);
+  const handleProceed = async () => {
+    const token = retrieveToken();
+    if (!token) return;
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/send-otp-email`,
+        { email: editableEmail },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.otp) {
+        setServerOtp(data.otp);
+        setShowOtpInput(true);
+      } else {
+        alert('OTP not sent, please try again.');
+      }
+    } catch (err) {
+      console.error('Failed to send OTP:', err);
+      alert('Error sending OTP, please check your connection.');
+    }
   };
 
-  const handleOtpChange = (event: any) => {
-    setOtp(event.target.value);
+  const handleSave = async () => {
+    const token = retrieveToken();
+    if (!token) return;
+
+    if (otp !== serverOtp) {
+      alert('Invalid OTP, please check and retry.');
+      return;
+    }
+
+    try {
+      const { data } = await axios.post(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/update-email`,
+        { email: editableEmail, otp },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.updated) {
+        setEmail(editableEmail);
+        setIsEditing(false);
+        setShowOtpInput(false);
+        setOtp('');
+        setServerOtp('');
+      } else {
+        alert('Failed to update email, please try again.');
+      }
+    } catch (err) {
+      console.error('Failed to update email:', err);
+      alert('Error updating email, please check your connection.');
+    }
   };
 
   const handleCancel = () => {
@@ -101,132 +153,104 @@ function ProfilePage() {
     setOtp('');
   };
 
-  const [serverOtp, setServerOtp] = useState('');
-
-  const handleProceed = async () => {
-    const token = retrieveToken();
-    if (!token) return;
-  
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/send-otp-email`,
-        { email: editableEmail },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (response.data.otp) {
-        setServerOtp(response.data.otp); // Store the OTP sent from the server
-        setShowOtpInput(true);
-      } else {
-        alert('OTP not sent. Please try again.');
-      }
-    } catch (error) {
-      console.error('Failed to send OTP:', error);
-      alert('Error sending OTP, please check your connection and try again.');
-    }
-  };
-  
-  const handleSave = async () => {
-    const token = retrieveToken();
-    if (!token) return;
-  
-    // Compare the client-entered OTP with the server-sent OTP
-    if (otp !== serverOtp) {
-      alert('OTP verification failed, please enter the correct OTP.');
-      return; // Stop the function if the OTPs do not match
-    }
-  
-    try {
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_BASE_URL}/api/update-email`,
-        { email: editableEmail, otp },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-  
-      if (response.data.updated===true) {
-        setEmail(editableEmail);
-        setIsEditing(false);
-        setShowOtpInput(false);
-        setOtp('');
-        setServerOtp(''); // Clear the OTP from state
-      } else {
-        alert('Email update failed. Please try again.');
-      }
-    } catch (error) {
-      console.error('Failed to update email:', error);
-      alert('Error updating email, please check your connection and try again.');
-    }
-  };
-  
-  
-
   return (
-    <main className='bg-gray-50 min-h-screen'>
+    <main className="bg-gray-50 min-h-screen">
       {loading && (
-        <div className="fixed inset-0 bg-white bg-opacity-80 z-50 flex items-center justify-center">
-          <div className="w-12 h-12 border-4 border-black border-t-transparent rounded-full animate-spin"></div>
+        <div className="fixed inset-0 bg-white bg-opacity-75 z-50 flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
         </div>
       )}
+
       <Header cartItemCount={0} />
-      <div className="flex flex-col items-center py-20">
-        <div className="bg-white p-8 rounded-lg shadow-lg max-w-2xl w-full">
-          <h1 className="text-3xl font-semibold mb-6">Profile</h1>
-          <p className="mb-3"><strong>Company Name:</strong> {name}</p>
-          <p className="mb-3"><strong>Address:</strong> {formatAddress()}</p>
-          <p className="mb-3"><strong>GST Number:</strong> {gst}</p>
-          <div className="flex items-center mb-3">
-            <strong>Email:</strong> {email}
-            <button onClick={handleEditClick} className="ml-2">
-              <Edit className="text-blue-500 h-6 w-6 hover:text-blue-700 cursor-pointer" />
-            </button>
+
+      <div className="container mx-auto px-4 py-16">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="bg-white rounded-xl shadow-lg p-8 max-w-3xl mx-auto"
+        >
+          <h1 className="text-3xl font-semibold mb-6 text-gray-800">My Profile</h1>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FieldRow icon={<Building size={20} />} label="Company Name" value={name} />
+            <FieldRow icon={<MapPin size={20} />} label="Address" value={formatAddress()} />
+            <FieldRow icon={<CreditCard size={20} />} label="GST Number" value={gst} />
+            <FieldRow icon={<Phone size={20} />} label="Mobile" value={mobile} />
+            <FieldRow
+              icon={<Mail size={20} />}
+              label="Email"
+              value={email}
+            />
           </div>
-        </div>
+
+          <button
+            onClick={handleEditClick}
+            className="mt-6 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition"
+          >
+            <Edit size={20} />
+            <span>Edit Email</span>
+          </button>
+        </motion.div>
       </div>
-      
+
       {isEditing && (
-        <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-2">Update Email</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white rounded-lg shadow-xl w-full max-w-md p-6"
+          >
+            <h2 className="text-2xl font-semibold mb-4 text-gray-800">Update Email</h2>
+
             {!showOtpInput ? (
               <>
-                <label htmlFor="email" className="block mb-2 font-semibold">New Email:</label>
+                <label htmlFor="email" className="block mb-2 text-gray-700 font-medium">
+                  New Email
+                </label>
                 <input
                   type="email"
                   id="email"
                   value={editableEmail}
-                  onChange={handleEmailChange}
-                  className="form-input px-4 py-2 border rounded-md w-full"
+                  onChange={(e) => setEditableEmail(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="flex justify-end space-x-4 mt-4">
-                  <button onClick={handleCancel} className="py-2 px-4 border rounded-md">Cancel</button>
-                  <button onClick={handleProceed} className="py-2 px-4 border rounded-md bg-blue-500 text-white">Proceed</button>
+                <div className="mt-6 flex justify-end gap-4">
+                  <button onClick={handleCancel} className="px-4 py-2 border border-gray-300 rounded-lg">
+                    Cancel
+                  </button>
+                  <button onClick={handleProceed} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Send OTP
+                  </button>
                 </div>
               </>
             ) : (
               <>
-              <h3 className=' text-sm font-semibold'>OTP has been sent to your new entered email</h3>
-                <label htmlFor="otp" className="block mb-2 font-semibold">Enter OTP:</label>
+                <p className="text-sm text-green-600 mb-2">
+                  OTP sent to {editableEmail}. Please check your inbox.
+                </p>
+                <label htmlFor="otp" className="block mb-2 text-gray-700 font-medium">
+                  Enter OTP
+                </label>
                 <input
                   type="text"
                   id="otp"
                   value={otp}
-                  onChange={handleOtpChange}
-                  className="form-input px-4 py-2 border rounded-md w-full"
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <div className="flex justify-end space-x-4 mt-4">
-                  <button onClick={handleCancel} className="py-2 px-4 border rounded-md">Cancel</button>
-                  <button onClick={handleSave} className="py-2 px-4 border rounded-md bg-blue-500 text-white">Save</button>
+                <div className="mt-6 flex justify-end gap-4">
+                  <button onClick={handleCancel} className="px-4 py-2 border border-gray-300 rounded-lg">
+                    Cancel
+                  </button>
+                  <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    Save
+                  </button>
                 </div>
               </>
             )}
-          </div>
+          </motion.div>
         </div>
       )}
     </main>
