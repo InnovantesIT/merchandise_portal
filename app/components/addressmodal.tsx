@@ -15,7 +15,6 @@ interface Address {
   country_code: string;
   phone: string;
   fax: string;
-  tax_info_id: string;
 }
 
 interface CustomShippingAddress {

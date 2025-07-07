@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface DropdownOption {
   value: string;

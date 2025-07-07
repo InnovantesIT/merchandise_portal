@@ -29,11 +29,12 @@ interface Product {
   customer_id: number;
   item_id: string;
   group_id: string;
+  moq: number; // Minimum Order Quantity
+  description?: string; // Add description field
 }
 
 
 interface ProductGroup {
-  group_id: string;
   group_name: string;
   brand: string;
 }
@@ -108,20 +109,29 @@ const Products = () => {
         const token = retrieveToken();
         if (!token) throw new Error("Token is missing");
     
-        const response = await axios.get(`${baseURL}/api/products?brand=Renault`, {
+        const response = await axios.get(`${baseURL}/api/items-paginated?brand=Renault`, {
           headers: {
             Authorization: `Bearer ${token}`,
             brand: 'Renault',
           },
         });
     
+        let productsData;
         if (Array.isArray(response.data.items)) {
-          setProducts(response.data.items);
+          productsData = response.data.items;
         } else if (Array.isArray(response.data)) {
-          setProducts(response.data);
+          productsData = response.data;
         } else {
           throw new Error("Unexpected response format");
         }
+
+        // Add moq value to all products - if API returns empty moq, keep it as undefined
+        const productsWithmoq = productsData.map((product: Product) => ({
+          ...product,
+          moq: product.moq // If moq is explicitly 0, keep it 0, otherwise default to 100
+        }));
+
+        setProducts(productsWithmoq);
       } catch (error:any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           localStorage.removeItem('token');
@@ -192,9 +202,12 @@ const Products = () => {
       const token = retrieveToken();
       if (!token) throw new Error("Token is missing");
 
+      // Use moq value (default to 100 if not set)
+      const quantityToAdd = product.moq;
+
       await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
-        quantity: 1,
+        quantity: quantityToAdd,
         
       }, {
         headers: {
@@ -211,15 +224,15 @@ const Products = () => {
         if (itemExists) {
           return prevItems.map((item) =>
             item.item_id === product.item_id
-              ? { ...item, quantity: item.quantity + 1 }
+              ? { ...item, quantity: item.quantity + quantityToAdd }
               : item
           );
         } else {
-          return [...prevItems, { ...product, quantity: 1 }];
+          return [...prevItems, { ...product, quantity: quantityToAdd }];
         }
       });
   
-      showToast(`${product.item_name} added to cart.`, "success");
+      showToast(`${product.item_name} added to cart (${quantityToAdd} units).`, "success");
     } catch (error: any) {
       if (error.response?.status === 401 || error.response?.status === 403) {
         // Clear user-related storage and redirect
@@ -307,7 +320,7 @@ const Products = () => {
 
   const filteredProducts = products
     .filter(product => {
-      const matchesFilter = selectedFilters.size === 0 || selectedFilters.has(product.group_id);
+      const matchesFilter = selectedFilters.size === 0 || selectedFilters.has(product.group_name);
       const matchesSearch = searchTerm === '' || searchTerm.length < 3 || 
         (product.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
         (product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
@@ -321,7 +334,7 @@ const Products = () => {
 
   const pageTitle = selectedFilters.size
     ? `Products - ${Array.from(selectedFilters).map(groupId => 
-        productGroups.find(group => group.group_id === groupId)?.group_name
+        productGroups.find(group => group.group_name === groupId)?.group_name
       ).filter(Boolean).join(", ")}`
     : "Browse Our Products";
 
@@ -387,13 +400,13 @@ const Products = () => {
                 </label>
                 {productGroups.map((group: ProductGroup) => (
                   <label
-                    key={group.group_id}
+                    key={group.group_name}
                     className="flex items-center space-x-3 cursor-pointer"
                   >
                     <input
                       type="checkbox"
-                      checked={tempSelectedFilters.has(group.group_id)}
-                      onChange={() => handleFilterChange(group.group_id)}
+                      checked={tempSelectedFilters.has(group.group_name)}
+                      onChange={() => handleFilterChange(group.group_name)}
                       className="form-checkbox w-5 h-5 accent-[#EFDF00]"
                     />
                     <span className="text-gray-700 capitalize">{group.group_name}</span>
@@ -439,7 +452,7 @@ const Products = () => {
           name="description"
           content={`Browse and order products from ${
             selectedFilters.size ? Array.from(selectedFilters).map(groupId => 
-              productGroups.find(group => group.group_id === groupId)?.group_name
+              productGroups.find(group => group.group_name === groupId)?.group_name
             ).filter(Boolean).join(", ") : "various categories"
           }.`}
         />
@@ -538,6 +551,7 @@ const Products = () => {
                   handleFilterChange={handleFilterChange} 
                   applyFilters={applyFilters} 
                 />
+                
               </>
             ) : (
               <div className="lg:w-1/6 w-full lg:h-full flex-shrink-0 mb-4 lg:mb-0">
@@ -565,7 +579,7 @@ const Products = () => {
                     </motion.label>
                     {productGroups.map((group) => (
                       <motion.label
-                        key={group.group_id}
+                        key={group.group_name}
                         className="flex items-center space-x-3 cursor-pointer"
                         initial={{ x: -10, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -573,8 +587,8 @@ const Products = () => {
                       >
                         <input
                           type="checkbox"
-                          checked={selectedFilters.has(group.group_id)}
-                          onChange={() => handleFilterChange(group.group_id)}
+                          checked={selectedFilters.has(group.group_name)}
+                          onChange={() => handleFilterChange(group.group_name)}
                           className="form-checkbox w-5 h-5 accent-[#EFDF00]"
                         />
                         <span className="text-gray-700 capitalize">{group.group_name}</span>

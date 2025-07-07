@@ -14,6 +14,10 @@ interface Product {
   customer_id: number;
   item_id: string;
   group_name?: string;
+  moq?: number; // Minimum Order Quantity
+  description?: string;
+  hsn_or_sac?: string;
+  tax_percentage?: number;
 }
 
 interface CartButtonProps {
@@ -32,7 +36,9 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [quantity, setQuantity] = useState(product.quantity);
   const [isAddedToCart, setIsAddedToCart] = useState(product.quantity > 0);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.jpg');
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -51,17 +57,46 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
     if (isAddedToCart) {
       router.push('/cart');
     } else {
-      setQuantity(1);
+      // Use MOQ value if available and greater than 0, otherwise use 1
+      const quantityToAdd = (product.moq && product.moq > 0) ? product.moq : 1;
+      setQuantity(quantityToAdd);
       setIsAddedToCart(true);
-      onAddToCart({ ...product, quantity: 1 }, customerId);
+      onAddToCart({ ...product, quantity: quantityToAdd }, customerId);
     }
   };
 
   const openModal = () => setIsModalOpen(true);
   const closeModal = () => setIsModalOpen(false);
+  const openDescriptionModal = () => setIsDescriptionModalOpen(true);
+  const closeDescriptionModal = () => setIsDescriptionModalOpen(false);
 
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     setImageSrc('img/defaultcard.jpg');
+  };
+
+  const toggleDescription = () => {
+    setIsDescriptionExpanded(!isDescriptionExpanded);
+  };
+
+  const renderDescription = () => {
+    if (!product.description) return null;
+    
+    const isLongDescription = product.description.length > 80;
+    const displayText = product.description.substring(0, 80) + (isLongDescription ? '...' : '');
+
+    return (
+      <div className="text-xs text-gray-500 mt-1 sm:px-3 px-0">
+        <span>{displayText}</span>
+        {isLongDescription && (
+          <button
+            onClick={openDescriptionModal}
+            className="ml-1 text-yellow-500 hover:underline font-medium"
+          >
+            View More
+          </button>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -104,6 +139,11 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
           <ArrowRight size={16} className="text-gray-400" />
           <span className="font-bold text-lg text-gray-800">₹{product.rate}</span>
         </div>
+        
+        <div className="text-xs text-gray-500">
+          Min. Order Qty: {(product.moq && product.moq > 0) ? product.moq : 1}
+        </div>
+        {renderDescription()}
       </div>
     </div>
 
@@ -130,6 +170,8 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
           <div className="space-y-1">
             <span className="text-xs text-gray-500">Amount to be Paid Now</span>
             <p className="text-lg font-bold text-gray-800">₹{product.rate}</p>
+            <p className="text-xs text-gray-500">Min. Order Qty: {(product.moq && product.moq > 0) ? product.moq : 1}</p>
+            {renderDescription()}
           </div>
         </div>
       </div>
@@ -162,16 +204,18 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative max-w-4xl max-h-[90vh] w-full"
+              className="relative max-w-xl max-h-[60vh] w-full"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="bg-white rounded-xl overflow-hidden shadow-2xl">
+              <div className=" ">
                 <img
                   src={imageSrc}
                   alt={product.item_name}
-                  className="w-full h-auto max-h-[80vh] object-contain"
+                  className="w-full h-auto max-h-[60vh] rounded-2xl "
                   onError={handleImageError}
                 />
+                
+                
               </div>
               
               <button
@@ -181,6 +225,62 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
               >
                 <X size={24} />
               </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Description Modal */}
+      <AnimatePresence>
+        {isDescriptionModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999] p-4"
+            onClick={closeDescriptionModal}
+          >
+            <motion.div
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="relative max-w-2xl w-full bg-white rounded-2xl p-6 max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-semibold text-gray-800">
+                    {product.item_name}
+                  </h3>
+                  <button
+                    onClick={closeDescriptionModal}
+                    className="text-gray-500 hover:text-gray-700 transition-colors duration-200"
+                    aria-label="Close modal"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <span>Amount to be Paid Now</span>
+                    <ArrowRight size={16} className="text-gray-400" />
+                    <span className="font-bold text-lg text-gray-800">₹{product.rate}</span>
+                  </div>
+                  
+                  <div className="text-sm text-gray-500">
+                    Min. Order Qty: {(product.moq && product.moq > 0) ? product.moq : 1}
+                  </div>
+                  
+                  <div className="border-t pt-4">
+                    <h4 className="font-medium text-gray-800 mb-2">Description</h4>
+                    <p className="text-gray-600 leading-relaxed">
+                      {product.description}
+                    </p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </motion.div>
         )}
