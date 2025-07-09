@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, X, ArrowRight,ShoppingCart } from 'lucide-react';
+import { ChevronRight, X, ArrowRight, ShoppingCart, ChevronLeft } from 'lucide-react';
 
 interface Product {
   name: string;
@@ -18,6 +18,7 @@ interface Product {
   description?: string;
   hsn_or_sac?: string;
   tax_percentage?: number;
+  additional_images?: string[]; // Add additional images field
 }
 
 interface CartButtonProps {
@@ -39,13 +40,61 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   const [isDescriptionModalOpen, setIsDescriptionModalOpen] = useState(false);
   const [imageSrc, setImageSrc] = useState(product.image_name || 'img/defaultcard.jpg');
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const router = useRouter();
+
+  // Create array of all images (main image + additional images)
+  const allImages = [
+    product.image_name || 'img/defaultcard.jpg',
+    ...(product.additional_images || [])
+  ];
 
   useEffect(() => {
     setQuantity(product.quantity);
     setIsAddedToCart(product.quantity > 0);
     setImageSrc(product.image_name || 'img/defaultcard.jpg');
+    setCurrentImageIndex(0); // Reset to first image when product changes
   }, [product]);
+
+  // Auto-scroll effect
+  useEffect(() => {
+    if (isModalOpen && allImages.length > 1) {
+      const interval = setInterval(() => {
+        setCurrentImageIndex((prevIndex) => 
+          prevIndex === allImages.length - 1 ? 0 : prevIndex + 1
+        );
+      }, 4000); // Change image every 3 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [isModalOpen, allImages.length]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!isModalOpen) return;
+      
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          prevImage();
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          nextImage();
+          break;
+        case 'Escape':
+          event.preventDefault();
+          closeModal();
+          break;
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isModalOpen]);
 
   const handleCartClick = () => {
     const customerId = localStorage.getItem('customer_id');
@@ -65,7 +114,10 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
     }
   };
 
-  const openModal = () => setIsModalOpen(true);
+  const openModal = () => {
+    setIsModalOpen(true);
+    setCurrentImageIndex(0);
+  };
   const closeModal = () => setIsModalOpen(false);
   const openDescriptionModal = () => setIsDescriptionModalOpen(true);
   const closeDescriptionModal = () => setIsDescriptionModalOpen(false);
@@ -76,6 +128,22 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
 
   const toggleDescription = () => {
     setIsDescriptionExpanded(!isDescriptionExpanded);
+  };
+
+  const nextImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === allImages.length - 1 ? 0 : prevIndex + 1
+    );
+  };
+
+  const prevImage = () => {
+    setCurrentImageIndex((prevIndex) => 
+      prevIndex === 0 ? allImages.length - 1 : prevIndex - 1
+    );
+  };
+
+  const goToImage = (index: number) => {
+    setCurrentImageIndex(index);
   };
 
   const renderDescription = () => {
@@ -117,7 +185,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
   <div className="flex-1">
     {/* Desktop Layout */}
     <div className="hidden sm:block">
-      <div className="mb-6 cursor-pointer group" onClick={openModal}>
+      <div className="mb-6 cursor-pointer group relative" onClick={openModal}>
         <div className="overflow-hidden rounded-lg bg-gray-50">
           <img
             src={imageSrc}
@@ -126,6 +194,12 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
             loading="lazy"
             onError={handleImageError}
           />
+          {/* Image count indicator */}
+          {allImages.length > 1 && (
+            <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+              +{allImages.length - 1}
+            </div>
+          )}
         </div>
       </div>
       
@@ -149,7 +223,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
 
     {/* Mobile Layout */}
     <div className="sm:hidden flex items-start gap-4 p-4">
-      <div className="cursor-pointer flex-shrink-0 group" onClick={openModal}>
+      <div className="cursor-pointer flex-shrink-0 group relative" onClick={openModal}>
         <div className="overflow-hidden rounded-lg bg-gray-50">
           <img
             src={imageSrc}
@@ -158,6 +232,12 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
             loading="lazy"
             onError={handleImageError}
           />
+          {/* Image count indicator */}
+          {allImages.length > 1 && (
+            <div className="absolute top-1 right-1 bg-black/70 text-white text-xs px-1.5 py-0.5 rounded-full">
+              +{allImages.length - 1}
+            </div>
+          )}
         </div>
       </div>
       
@@ -204,27 +284,93 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="relative max-w-xl max-h-[60vh] w-full"
+              className="relative max-w-4xl max-h-[80vh] w-full bg-white rounded-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className=" ">
+              {/* Main Image Container */}
+              <div className="relative bg-black">
                 <img
-                  src={imageSrc}
-                  alt={product.item_name}
-                  className="w-full h-auto max-h-[60vh] rounded-2xl "
+                  src={allImages[currentImageIndex]}
+                  alt={`${product.item_name} - Image ${currentImageIndex + 1}`}
+                  className="w-full h-auto max-h-[60vh] object-contain mx-auto"
                   onError={handleImageError}
                 />
                 
-                
+                {/* Navigation Arrows */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white bg-black/50 backdrop-blur-sm rounded-full p-3 hover:bg-black/70 transition-colors duration-200 z-10"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft size={24} />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white bg-black/50 backdrop-blur-sm rounded-full p-3 hover:bg-black/70 transition-colors duration-200 z-10"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight size={24} />
+                    </button>
+                  </>
+                )}
+
+                {/* Close Button */}
+                <button
+                  onClick={closeModal}
+                  className="absolute top-4 right-4 text-white bg-black/50 backdrop-blur-sm rounded-full p-2 hover:bg-black/70 transition-colors duration-200 z-10"
+                  aria-label="Close modal"
+                >
+                  <X size={24} />
+                </button>
+
+                {/* Image Counter */}
+                {allImages.length > 1 && (
+                  <div className="absolute bottom-4 left-4 text-white bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-sm">
+                    {currentImageIndex + 1} / {allImages.length}
+                  </div>
+                )}
+
+                {/* Auto-scroll indicator */}
+                {allImages.length > 1 && (
+                  <div className="absolute bottom-4 right-4 text-white bg-black/50 backdrop-blur-sm rounded-full px-3 py-1 text-xs">
+                    Auto-scroll
+                  </div>
+                )}
               </div>
+
+              {/* Thumbnail Navigation */}
+              {allImages.length > 1 && (
+                <div className="p-4 bg-gray-50">
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {allImages.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => goToImage(index)}
+                        className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                          currentImageIndex === index
+                            ? 'border-blue-500 shadow-lg'
+                            : 'border-gray-300 hover:border-gray-400'
+                        }`}
+                      >
+                        <img
+                          src={image}
+                          alt={`Thumbnail ${index + 1}`}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = 'img/defaultcard.jpg';
+                          }}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Product Info */}
               
-              <button
-                onClick={closeModal}
-                className="absolute top-4 right-4 text-white bg-black/50 backdrop-blur-sm rounded-full p-2 hover:bg-black/70 transition-colors duration-200"
-                aria-label="Close modal"
-              >
-                <X size={24} />
-              </button>
             </motion.div>
           </motion.div>
         )}

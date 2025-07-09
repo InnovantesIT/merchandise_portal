@@ -31,6 +31,7 @@ interface Product {
   group_id: string;
   moq: number; // Minimum Order Quantity
   description?: string; // Add description field
+  additional_images?: string[]; // Add additional images field
 }
 
 
