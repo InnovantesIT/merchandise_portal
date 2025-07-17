@@ -190,7 +190,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
           <img
             src={imageSrc}
             alt={product.item_name}
-            className="w-full  group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-[300px]  group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
             onError={handleImageError}
           />

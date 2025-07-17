@@ -118,9 +118,8 @@ const CartItem: React.FC<{
           <button
             onClick={() => onUpdateQuantity(product, -1)}
             disabled={!canEditItems || isAtMOQ}
-            className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${
-              !canEditItems || isAtMOQ ? 'cursor-not-allowed opacity-50' : ''
-            }`}
+            className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems || isAtMOQ ? 'cursor-not-allowed opacity-50' : ''
+              }`}
             title={isAtMOQ ? `Cannot reduce below minimum order quantity (${product.moq})` : 'Decrease quantity'}
           >
             <Minus size={16} />
@@ -132,9 +131,8 @@ const CartItem: React.FC<{
           <button
             onClick={() => onUpdateQuantity(product, 1)}
             disabled={!canEditItems}
-            className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${
-              !canEditItems ? 'cursor-not-allowed opacity-50' : ''
-            }`}
+            className={`p-2 text-gray-600 hover:bg-gray-100 transition-all duration-200 ease-in-out ${!canEditItems ? 'cursor-not-allowed opacity-50' : ''
+              }`}
             title="Increase quantity"
           >
             <Plus size={16} />
@@ -146,15 +144,15 @@ const CartItem: React.FC<{
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-100">
-              <th className="p-2 text-left">HSN Code</th> 
+              <th className="p-2 text-left">HSN Code</th>
               <th className="p-2 text-left">Price</th>
               <th className="p-2 text-left">GST (%)</th>
-              <th className="p-2 text-left">Subtotal</th> 
-            </tr> 
+              <th className="p-2 text-left">Subtotal</th>
+            </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="p-2">{product.hsn_or_sac}</td> 
+              <td className="p-2">{product.hsn_or_sac}</td>
               <td className="p-2">₹{product.rate.toFixed(2)}</td>
               <td className="p-2">{product.tax_percentage}%</td>
               <td className="p-2">₹{product.sub_total.toFixed(2)}</td>
@@ -195,15 +193,15 @@ const ExtraChargeItem: React.FC<{
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-200">
-              <th className="p-2 text-left">HSN Code</th> 
+              <th className="p-2 text-left">HSN Code</th>
               <th className="p-2 text-left">Charge Amount</th>
               <th className="p-2 text-left">GST (%)</th>
-              <th className="p-2 text-left">Total</th> 
-            </tr> 
+              <th className="p-2 text-left">Total</th>
+            </tr>
           </thead>
           <tbody>
             <tr>
-              <td className="p-2">{charge.hsn_code || '-'}</td> 
+              <td className="p-2">{charge.hsn_code || '-'}</td>
               <td className="p-2">₹{Number(charge.charge_amount).toFixed(2)}</td>
               <td className="p-2">{charge.gst_percentage}%</td>
               <td className="p-2">₹{Number(charge.total_charge).toFixed(2)}</td>
@@ -229,7 +227,7 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[], cartSummary: CartSumma
               <th className="border border-gray-300 p-2">Price</th>
               <th className="border border-gray-300 p-2">Subtotal</th>
               <th className="border border-gray-300 p-2">Tax</th>
-              <th className="border border-gray-300 p-2">Total</th> 
+              <th className="border border-gray-300 p-2">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -241,12 +239,12 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[], cartSummary: CartSumma
                 <td className="border border-gray-300 p-2 text-center">₹{item.rate.toFixed(2)}</td>
                 <td className="border border-gray-300 p-2 text-center">₹{item.calculations.base_amount.toFixed(2)}</td>
                 <td className="border border-gray-300 p-2 text-center">₹{item.calculations.item_tax_amount.toFixed(2)}</td>
-                <td className="border border-gray-300 p-2 text-center">₹{item.sub_total.toFixed(2)}</td> 
+                <td className="border border-gray-300 p-2 text-center">₹{item.sub_total.toFixed(2)}</td>
               </tr>
             ))}
 
             {/* Extra Charges Rows */}
-            {cartSummary?.extra_charges_breakdown.length > 0 && 
+            {cartSummary?.extra_charges_breakdown.length > 0 &&
               cartSummary.extra_charges_breakdown.map((charge, index) => (
                 <tr key={`charge-${index}`} className="bg-gray-50">
                   <td className="border border-gray-300 p-2 text-center font-medium">
@@ -263,12 +261,12 @@ const OrderSummaryTable: React.FC<{ cartItems: Product[], cartSummary: CartSumma
           </tbody>
         </table>
       </div>
-      
+
       {/* Summary Section */}
       <div className="mt-6 space-y-2 text-right">
         <div className="flex justify-between items-center border-t pt-2">
           <span className="text-xl font-bold">Grand Total:</span>
-          <span className="text-2xl font-bold">₹{cartSummary.cart_total.toFixed(2)}</span>
+          <span className="text-2xl font-bold">₹{cartSummary ? cartSummary.cart_total.toFixed(2) : '0.00'}</span>
         </div>
       </div>
     </div>
@@ -333,24 +331,44 @@ const CartPage: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-        
-        const cartItemsWithMOQ = response.data.data.map((item: Product) => ({
-          ...item,
-          moq: item.moq || 1
-        }));
 
-        setCartItems(cartItemsWithMOQ);
-        setShowPaymentDetails(cartItemsWithMOQ.length > 0);
-        
-        // Set cart summary from API response
-        setCartSummary(response.data.cart_summary);
-        setGrandTotal(response.data.cart_summary.cart_total);
+        // Handle empty cart case
+        if (!response.data.data || response.data.data.length === 0) {
+          setCartItems([]);
+          setShowPaymentDetails(false);
+          setCartSummary(null);
+          setGrandTotal(0);
+          setPaymentDetails(prev => ({
+            ...prev,
+            amount: '0.00'
+          }));
+        } else {
+          const cartItemsWithMOQ = response.data.data.map((item: Product) => ({
+            ...item,
+            moq: item.moq || 1
+          }));
 
-        // Prefill the amount field with the grand total
-        setPaymentDetails(prev => ({
-          ...prev,
-          amount: response.data.cart_summary.cart_total.toFixed(2)
-        }));
+          setCartItems(cartItemsWithMOQ);
+          setShowPaymentDetails(cartItemsWithMOQ.length > 0);
+
+          // Set cart summary from API response
+          if (response.data.cart_summary) {
+            setCartSummary(response.data.cart_summary);
+            setGrandTotal(response.data.cart_summary.cart_total);
+            // Prefill the amount field with the grand total
+            setPaymentDetails(prev => ({
+              ...prev,
+              amount: response.data.cart_summary.cart_total.toFixed(2)
+            }));
+          } else {
+            setCartSummary(null);
+            setGrandTotal(0);
+            setPaymentDetails(prev => ({
+              ...prev,
+              amount: '0.00'
+            }));
+          }
+        }
 
         // Add debugging for addresses
         console.log('Fetching addresses...');
@@ -358,7 +376,7 @@ const CartPage: React.FC = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         console.log('Address response:', addressResponse.data);
-        
+
         // Fix: Handle shipping_address as an object, not an array
         const shippingAddress = addressResponse.data.addresses;
         console.log('Processed addresses:', shippingAddress ? [shippingAddress] : []);
@@ -400,15 +418,15 @@ const CartPage: React.FC = () => {
       router.push('/');
       return;
     }
-  
+
     const newQuantity = product.quantity + change;
     const hasMOQ = product.moq && product.moq > 0;
-    
+
     if (change < 0 && hasMOQ && newQuantity < product.moq) {
       setErrorMessage(`Cannot reduce quantity below minimum order quantity (${product.moq})`);
       return;
     }
-    
+
     if (newQuantity > 0) {
       try {
         const response = await axios.post(`${baseURL}/api/add-cart`, {
@@ -420,7 +438,7 @@ const CartPage: React.FC = () => {
             brand: 'renault',
           },
         });
-  
+
         if (response.status === 200) {
           // Check if the response has the expected structure
           if (response.data && response.data.data) {
@@ -428,15 +446,15 @@ const CartPage: React.FC = () => {
               ...item,
               moq: item.moq || 1
             }));
-            
+
             setCartItems(updatedCartItems);
-            
+
             // Update cart summary if available
             if (response.data.cart_summary) {
               setCartSummary(response.data.cart_summary);
               setGrandTotal(response.data.cart_summary.cart_total);
             }
-            
+
             setErrorMessage(null);
             console.log('API Response:', response.data);
             console.log('Updated cart items:', response.data.data);
@@ -447,15 +465,21 @@ const CartPage: React.FC = () => {
                 Authorization: `Bearer ${token}`,
               },
             });
-            
+
             const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
               ...item,
               moq: item.moq || 1
             }));
 
             setCartItems(cartItemsWithMOQ);
-            setCartSummary(cartResponse.data.cart_summary);
-            setGrandTotal(cartResponse.data.cart_summary.cart_total);
+
+            if (cartResponse.data.cart_summary) {
+              setCartSummary(cartResponse.data.cart_summary);
+              setGrandTotal(cartResponse.data.cart_summary.cart_total);
+            } else {
+              setCartSummary(null);
+              setGrandTotal(0);
+            }
             setErrorMessage(null);
           }
         } else {
@@ -489,22 +513,68 @@ const CartPage: React.FC = () => {
       });
 
       if (response.status === 200) {
-        // Remove only the specific item from the cart
-        const updatedCartItems = cartItems.filter(item => item.item_id !== product.item_id);
-        
-        setCartItems(updatedCartItems);
-        
-        // Update cart summary and total if available in response
-        if (response.data?.cart_summary) {
-          setCartSummary(response.data.cart_summary);
-          setGrandTotal(response.data.cart_summary.cart_total);
-        } else {
-          // Recalculate totals locally if API doesn't provide updated summary
-          const newSubtotal = updatedCartItems.reduce((sum, item) => sum + item.sub_total, 0);
-          setGrandTotal(newSubtotal);
+        // After removing item, fetch updated cart data
+        try {
+          const cartResponse = await axios.get(`${baseURL}/api/cart-by-user-id`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          // Handle empty cart case
+          if (!cartResponse.data.data || cartResponse.data.data.length === 0) {
+            setCartItems([]);
+            setShowPaymentDetails(false);
+            setCartSummary(null);
+            setGrandTotal(0);
+            setPaymentDetails(prev => ({
+              ...prev,
+              amount: '0.00'
+            }));
+          } else {
+            const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
+              ...item,
+              moq: item.moq || 1
+            }));
+
+            setCartItems(cartItemsWithMOQ);
+            setShowPaymentDetails(cartItemsWithMOQ.length > 0);
+
+            if (cartResponse.data.cart_summary) {
+              setCartSummary(cartResponse.data.cart_summary);
+              setGrandTotal(cartResponse.data.cart_summary.cart_total);
+              // Update payment details amount with new total
+              setPaymentDetails(prev => ({
+                ...prev,
+                amount: cartResponse.data.cart_summary.cart_total.toFixed(2)
+              }));
+            } else {
+              setCartSummary(null);
+              setGrandTotal(0);
+              setPaymentDetails(prev => ({
+                ...prev,
+                amount: '0.00'
+              }));
+            }
+          }
+
+        } catch (fetchError) {
+          console.error('Error fetching updated cart:', fetchError);
+          setCartSummary(null);
+          setGrandTotal(0);
+          // Fallback to local state update if API call fails
+          const updatedCartItems = cartItems.filter(item => item.item_id !== product.item_id);
+          setCartItems(updatedCartItems);
+          setShowPaymentDetails(updatedCartItems.length > 0);
+
+          if (response.data?.cart_summary) {
+            setCartSummary(response.data.cart_summary);
+            setGrandTotal(response.data.cart_summary.cart_total);
+          } else {
+            const newSubtotal = updatedCartItems.reduce((sum, item) => sum + item.sub_total, 0);
+            setGrandTotal(newSubtotal);
+          }
         }
-        
-        setShowPaymentDetails(updatedCartItems.length > 0);
       }
     } catch (error: any) {
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -537,7 +607,7 @@ const CartPage: React.FC = () => {
     setShowOrderSummary(true);
     setIsPaymentPlaced(true);
     setErrorMessage(null);
-    
+
     // Also prefill amount when proceeding to payment
     setPaymentDetails(prev => ({
       ...prev,
@@ -574,33 +644,33 @@ const CartPage: React.FC = () => {
 
   const handlePlaceOrder = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (cartItems.length === 0) {
       setErrorMessage("Your cart is empty. Add items before placing an order.");
       return;
     }
-  
+
     if (!paymentDetails.contact_name || !paymentDetails.contact_phone) {
       setErrorMessage("Please fill in all details.");
       return;
     }
-  
+
     if (grandTotal > 0) {
       if (!paymentDetails.mode || !paymentDetails.reference || !paymentDetails.amount || !paymentDetails.date || !paymentDetails.contact_name || !paymentDetails.contact_phone) {
         setErrorMessage("Please fill in all payment details.");
         return;
       }
-  
+
       const enteredAmount = parseFloat(paymentDetails.amount);
       if (enteredAmount < parseFloat(grandTotal.toFixed(2))) {
         setErrorMessage(`Amount should be at least equal to the grand total of ₹${grandTotal.toFixed(2)}`);
         return;
       }
     }
-  
+
     const timestamp = new Date().toISOString().replace(/[-:.T]/g, '').slice(0, 14);
     const salesOrderNumber = `SO-${paymentDetails.mode}-${timestamp}`;
-  
+
     const salesOrderData: any = {
       salesorder_number: salesOrderNumber,
       line_items: cartItems.map((item) => ({
@@ -629,7 +699,7 @@ const CartPage: React.FC = () => {
       setErrorMessage('No items in the cart to place an order.');
       return;
     }
-  
+
     try {
       const response = await axios.post(`${baseURL}/api/sales-order`, salesOrderData, {
         headers: {
@@ -637,13 +707,13 @@ const CartPage: React.FC = () => {
           brand: 'renault',
         },
       });
-  
+
       if (response.status === 200 || response.status === 201) {
         setOrderPlaced(true);
         setCanEditItems(false);
         setShowPaymentDetails(false);
         setErrorMessage(null);
-  
+
         try {
           await Promise.all(
             cartItems.map(async (item) => {
@@ -760,7 +830,7 @@ const CartPage: React.FC = () => {
                                 cartSummary={cartSummary}
                               />
                             ))}
-                            
+
                             {/* Display extra charges as separate items */}
                             {cartSummary?.extra_charges_breakdown?.map((charge, index) => (
                               <ExtraChargeItem
@@ -788,7 +858,7 @@ const CartPage: React.FC = () => {
                           <span>Amount to be Paid Now</span>
                         </h2>
                       </header>
-                      
+
                       <div className="border-t pt-2 mb-4">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-800 font-semibold">
@@ -802,14 +872,13 @@ const CartPage: React.FC = () => {
 
                       <button
                         onClick={handleProceed}
-                        className={`mt-2 w-full py-2 px-4 rounded-md font-sans hover:scale-105 hover:shadow-lg hover:bg-white hover:border-black border-2 border-gray-50 hover:text-black tracking-wider transition duration-300 ${
-                          cartItems.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black text-white'
-                        }`}
+                        className={`mt-2 w-full py-2 px-4 rounded-md font-sans hover:scale-105 hover:shadow-lg hover:bg-white hover:border-black border-2 border-gray-50 hover:text-black tracking-wider transition duration-300 ${cartItems.length === 0 ? 'bg-gray-300 cursor-not-allowed' : 'bg-black text-white'
+                          }`}
                         disabled={cartItems.length === 0}
                       >
                         Proceed
                       </button>
-                      
+
                       {errorMessage && (
                         <motion.p
                           initial={{ opacity: 0 }}
@@ -864,7 +933,7 @@ const CartPage: React.FC = () => {
 
                   <div className="mt-6">
                     <label htmlFor="shipping-address-select" className="block text-2xl font-semibold my-2">Shipping Details *</label>
-                    
+
                     {addresses && addresses.length > 0 ? (
                       <ShippingAddressDropdown
                         addresses={addresses}
