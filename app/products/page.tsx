@@ -9,10 +9,10 @@ import Header from "@/app/components/header";
 import { motion } from "framer-motion";
 import { RiCloseLine } from "react-icons/ri";
 import { SlidersHorizontal, Search, X } from 'lucide-react';
-import { UserContext } from "@/app/context/usercontext"; 
+import { UserContext } from "@/app/context/usercontext";
 import { useRouter } from 'next/navigation';
 import { ShoppingCart } from 'lucide-react';
-import Link  from 'next/link';
+import Link from 'next/link';
 import Footer from '@/app/components/footer';
 import { decrypt } from '@/app/action/enc';
 import Loader from '@/app/components/loader'
@@ -42,25 +42,30 @@ interface ProductGroup {
 
 const Products = () => {
   const userContext = useContext(UserContext);
-  const user = userContext?.user;
   const [products, setProducts] = useState<Product[]>([]);
   const [productGroups, setProductGroups] = useState<ProductGroup[]>([]);
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
   const [tempSelectedFilters, setTempSelectedFilters] = useState<Set<string>>(new Set());
-  const [isFilterOpen, setIsFilterOpen] = useState(false);  
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [userName, setUserName] = useState('');
   const [customerId, setCustomerId] = useState<string | null>(null);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
-  const router = useRouter(); 
+  const router = useRouter();
   const [cartItems, setCartItems] = useState<Product[]>([]);
   const [firstName, setFirstName] = useState<string>('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [productsPerPage] = useState(25); 
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 20,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
 
-  
+
   const retrieveToken = () => {
     if (typeof window !== 'undefined') {
       const encryptedToken = localStorage.getItem('token');
@@ -102,58 +107,70 @@ const Products = () => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  useEffect(() => {
-    const fetchProducts = async () => {
-      setIsLoading(true);
-    
-      try {
-        const token = retrieveToken();
-        if (!token) throw new Error("Token is missing");
-    
-        const response = await axios.get(`${baseURL}/api/items-paginated?brand=Renault`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            brand: 'Renault',
-          },
-        });
-    
-        let productsData;
-        if (Array.isArray(response.data.items)) {
-          productsData = response.data.items;
-        } else if (Array.isArray(response.data)) {
-          productsData = response.data;
-        } else {
-          throw new Error("Unexpected response format");
-        }
+  const fetchProducts = async (page: number = 1, search: string = '', filters: Set<string> = selectedFilters) => {
+    setIsLoading(true);
 
-        // Add moq value to all products - if API returns empty moq, keep it as undefined
+    try {
+      const token = retrieveToken();
+      if (!token) throw new Error("Token is missing");
+
+      // Build query parameters
+      const params = new URLSearchParams({
+        brand: 'Renault',
+        page: page.toString(),
+      });
+
+      if (search && search.length >= 3) {
+        params.append('search', search);
+      }
+
+      if (filters.size > 0) {
+        const groupNames = Array.from(filters).join(',');
+        params.append('group_name', groupNames);
+      }
+
+      const response = await axios.get(`${baseURL}/api/items-paginated?${params.toString()}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          brand: 'Renault',
+        },
+      });
+
+      if (response.data.items && response.data.pagination) {
+        const productsData = response.data.items;
+        const paginationData = response.data.pagination;
+
         const productsWithmoq = productsData.map((product: Product) => ({
           ...product,
-          moq: product.moq // If moq is explicitly 0, keep it 0, otherwise default to 100
+          moq: product.moq
         }));
 
         setProducts(productsWithmoq);
-      } catch (error:any) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('customer_id');
-          localStorage.removeItem('first_name');
-          localStorage.removeItem('username');
-          
-          router.push('/');
-        }
-    
-        // Log and display error
-        console.error("Error fetching products:", error);
-        showToast("Failed to load products. Please try again later.", "error");
-      } finally {
-        setIsLoading(false);
+        setPagination(paginationData);
+        setCurrentPage(paginationData.currentPage);
+      } else {
+        throw new Error("Unexpected response format");
       }
-    };
-    
+    } catch (error: any) {
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('role');
+        localStorage.removeItem('customer_id');
+        localStorage.removeItem('first_name');
+        localStorage.removeItem('username');
 
-    fetchProducts();
+        router.push('/');
+      }
+
+      console.error("Error fetching products:", error);
+      showToast("Failed to load products. Please try again later.", "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProducts(1, searchTerm, selectedFilters);
   }, [baseURL, router]);
 
   useEffect(() => {
@@ -161,20 +178,20 @@ const Products = () => {
       try {
         const token = retrieveToken();
         if (!token) throw new Error("Token is missing");
-        
+
         const response = await axios.get(`${baseURL}/api/product-categories`, {
           headers: {
             Authorization: `Bearer ${token}`,
             brand: 'Renault',
           },
         });
-        
+
         if (Array.isArray(response.data)) {
           setProductGroups(response.data);
         } else {
           throw new Error("Unexpected response format for product categories");
         }
-      } catch (error:any) {
+      } catch (error: any) {
         if (error.response?.status === 401 || error.response?.status === 403) {
           // Clear user-related storage and redirect
           localStorage.removeItem('token');
@@ -182,7 +199,7 @@ const Products = () => {
           localStorage.removeItem('customer_id');
           localStorage.removeItem('first_name');
           localStorage.removeItem('username');
-          
+
           router.push('/');
         }
         console.error("Error fetching product groups:", error);
@@ -198,7 +215,7 @@ const Products = () => {
       showToast("Customer ID not found. Please log in again.", "error");
       return;
     }
-  
+
     try {
       const token = retrieveToken();
       if (!token) throw new Error("Token is missing");
@@ -209,19 +226,19 @@ const Products = () => {
       await axios.post(`${baseURL}/api/add-cart`, {
         item_id: product.item_id,
         quantity: quantityToAdd,
-        
+
       }, {
         headers: {
           Authorization: `Bearer ${token}`,
           brand: 'renault',
         },
       });
-  
+
       setCartItems((prevItems) => {
         const itemExists = prevItems.find(
           (item) => item.item_id === product.item_id
         );
-  
+
         if (itemExists) {
           return prevItems.map((item) =>
             item.item_id === product.item_id
@@ -232,7 +249,7 @@ const Products = () => {
           return [...prevItems, { ...product, quantity: quantityToAdd }];
         }
       });
-  
+
       showToast(`${product.item_name} added to cart (${quantityToAdd} units).`, "success");
     } catch (error: any) {
       if (error.response?.status === 401 || error.response?.status === 403) {
@@ -242,7 +259,7 @@ const Products = () => {
         localStorage.removeItem('customer_id');
         localStorage.removeItem('first_name');
         localStorage.removeItem('username');
-        
+
         router.push('/');
       }
       console.error(
@@ -252,7 +269,7 @@ const Products = () => {
       showToast("Failed to add item to cart.", "error");
     }
   };
-  
+
   const showToast = (message: string, type: "success" | "error") => {
     const position: ToastPosition = "top-right";
     const options = {
@@ -299,44 +316,61 @@ const Products = () => {
             newFilters.add(groupId);
           }
         }
+        // Fetch products from page 1 when filters change (non-mobile)
+        fetchProducts(1, searchTerm, newFilters);
         return newFilters;
       });
     }
   };
 
   const applyFilters = () => {
-    setSelectedFilters(new Set(tempSelectedFilters));
+    const newFilters = new Set(tempSelectedFilters);
+    setSelectedFilters(newFilters);
+    // Fetch products from page 1 when filters are applied (mobile)
+    fetchProducts(1, searchTerm, newFilters);
     toggleFilterDrawer();
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
+    const value = e.target.value;
+    setSearchTerm(value);
+
+    // Debounce search - fetch products after user stops typing
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    const timeout = setTimeout(() => {
+      fetchProducts(1, value, selectedFilters);
+    }, 500);
+
+    setSearchTimeout(timeout);
   };
 
   const clearSearch = () => {
     setSearchTerm('');
-    setCurrentPage(1);
+    fetchProducts(1, '', selectedFilters);
   };
 
-  const filteredProducts = products
-    .filter(product => {
-      const matchesFilter = selectedFilters.size === 0 || selectedFilters.has(product.group_name);
-      const matchesSearch = searchTerm === '' || searchTerm.length < 3 || 
-        (product.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-        (product.name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false) ||
-        (product.group_name?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
-      
-      return matchesFilter && matchesSearch;
-    })
-    .sort((a, b) =>
-      selectedFilters.size > 0 ? (a.group_name || '').localeCompare(b.group_name || '') : 0
-    );
+  // Add search timeout state
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  // Cleanup search timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
+
+  // Products are now filtered server-side, so we can use them directly
+  const filteredProducts = products;
 
   const pageTitle = selectedFilters.size
-    ? `Products - ${Array.from(selectedFilters).map(groupId => 
-        productGroups.find(group => group.group_name === groupId)?.group_name
-      ).filter(Boolean).join(", ")}`
+    ? `Products - ${Array.from(selectedFilters).map(groupId =>
+      productGroups.find(group => group.group_name === groupId)?.group_name
+    ).filter(Boolean).join(", ")}`
     : "Browse Our Products";
 
   useEffect(() => {
@@ -349,7 +383,7 @@ const Products = () => {
 
   const FilterDrawer = ({ isFilterOpen, toggleFilterDrawer, productGroups, tempSelectedFilters, handleFilterChange, applyFilters }: any) => {
     const [isClosing, setIsClosing] = useState(false);
-  
+
     const handleCloseDrawer = () => {
       setIsClosing(true);
       setTimeout(() => {
@@ -357,19 +391,19 @@ const Products = () => {
         toggleFilterDrawer();
       }, 300);
     };
-  
+
     const handleApplyFilters = (e: any) => {
       e.stopPropagation();
       applyFilters();
       handleCloseDrawer();
     };
-  
+
     const handleOutsideClick = (e: any) => {
       if (e.target.classList.contains('drawer-background')) {
         handleCloseDrawer();
       }
     };
-  
+
     return (
       isFilterOpen && (
         <div
@@ -377,10 +411,9 @@ const Products = () => {
           onClick={handleOutsideClick}
         >
           <div
-            className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg z-[10000] overflow-y-auto transform transition-transform duration-500 ease-out ${
-              isClosing ? 'translate-x-full' : 'translate-x-0'
-            }`}
-            onClick={(e) => e.stopPropagation()} 
+            className={`fixed inset-y-0 right-0 w-64 bg-white shadow-lg z-[10000] overflow-y-auto transform transition-transform duration-500 ease-out ${isClosing ? 'translate-x-full' : 'translate-x-0'
+              }`}
+            onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4" onClick={(e) => e.stopPropagation()}>
               <div className="flex justify-between items-center mb-4">
@@ -427,40 +460,56 @@ const Products = () => {
     );
   }
 
-  // Pagination
-  const indexOfLastProduct = currentPage * productsPerPage;
-  const indexOfFirstProduct = indexOfLastProduct - productsPerPage;
-  const currentProducts = filteredProducts.slice(indexOfFirstProduct, indexOfLastProduct);
-
   const paginate = (pageNumber: number) => {
-    setCurrentPage(pageNumber);
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (pageNumber !== currentPage) {
+      fetchProducts(pageNumber, searchTerm, selectedFilters);
+      if (typeof window !== 'undefined') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   };
-  
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
 
-  const pageNumbers = [];
-  for (let i = 1; i <= totalPages; i++) {
-    pageNumbers.push(i);
-  }
+  // Generate page numbers for pagination display
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    const totalPages = pagination.totalPages;
+
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const currentPage = pagination.currentPage;
+      let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+      let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+      if (endPage - startPage < maxVisiblePages - 1) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pages.push(i);
+      }
+    }
+
+    return pages;
+  };
 
   return (
     <div className="min-h-screen bg-white">
       <Head>
         <meta
           name="description"
-          content={`Browse and order products from ${
-            selectedFilters.size ? Array.from(selectedFilters).map(groupId => 
-              productGroups.find(group => group.group_name === groupId)?.group_name
-            ).filter(Boolean).join(", ") : "various categories"
-          }.`}
+          content={`Browse and order products from ${selectedFilters.size ? Array.from(selectedFilters).map(groupId =>
+            productGroups.find(group => group.group_name === groupId)?.group_name
+          ).filter(Boolean).join(", ") : "various categories"
+            }.`}
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="max-w-9xl mx-auto">
-      <Header cartItemCount={cartItems.length} />
+        <Header cartItemCount={cartItems.length} />
         <ToastContainer />
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -469,13 +518,13 @@ const Products = () => {
           className="max-w-screen relative my-8 px-4 sm:px-8 md:block hidden"
         >
           <motion.img
-  src={"img/Banner.png"}
-  alt="Welcome Banner"
-  className="w-full object-cover h-20 rounded-lg"
-  initial={{ opacity: 0 }}
-  animate={{ opacity: 1 }}
-  transition={{ duration: 0.5 }}
-/>
+            src={"img/Banner.png"}
+            alt="Welcome Banner"
+            className="w-full object-cover h-20 rounded-lg"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          />
 
           <div
             className="absolute inset-0 bg-gradient-to-r to-[#414141] from-[#3c3c3c]   mx-4 sm:mx-8 rounded-lg"
@@ -524,7 +573,7 @@ const Products = () => {
               </div>
               {searchTerm && searchTerm.length >= 3 && (
                 <div className="mt-2 text-sm text-gray-600">
-                  {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found for &ldquo;{searchTerm}&rdquo;
+                  {pagination.totalItems} product{pagination.totalItems !== 1 ? 's' : ''} found for &ldquo;{searchTerm}&rdquo;
                 </div>
               )}
               {searchTerm && searchTerm.length > 0 && searchTerm.length < 3 && (
@@ -544,15 +593,15 @@ const Products = () => {
                 >
                   <SlidersHorizontal size={20} strokeWidth={1.25} />
                 </button>
-                <FilterDrawer 
-                  isFilterOpen={isFilterOpen} 
-                  toggleFilterDrawer={toggleFilterDrawer} 
-                  productGroups={productGroups} 
-                  tempSelectedFilters={tempSelectedFilters} 
-                  handleFilterChange={handleFilterChange} 
-                  applyFilters={applyFilters} 
+                <FilterDrawer
+                  isFilterOpen={isFilterOpen}
+                  toggleFilterDrawer={toggleFilterDrawer}
+                  productGroups={productGroups}
+                  tempSelectedFilters={tempSelectedFilters}
+                  handleFilterChange={handleFilterChange}
+                  applyFilters={applyFilters}
                 />
-                
+
               </>
             ) : (
               <div className="lg:w-1/6 w-full lg:h-full flex-shrink-0 mb-4 lg:mb-0">
@@ -603,89 +652,99 @@ const Products = () => {
               <div className="text-black text-lg font-sans m-1 mb-2 mx-auto lg:hidden flex gap-24">
                 Hi {firstName || "Guest"}. Welcome Back!
                 <Link href="/cart">
-  <div className="relative">
-    <ShoppingCart strokeWidth={1.25} className="relative z-10" />
-    {cartItems.length > 0 && (
-      <span className="absolute -top-4 -right-1.5 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 flex items-center justify-center">
-        {cartItems.reduce((total, item) => total + item.quantity, 0)}
-      </span>
-    )}
-  </div>
-</Link>
+                  <div className="relative">
+                    <ShoppingCart strokeWidth={1.25} className="relative z-10" />
+                    {cartItems.length > 0 && (
+                      <span className="absolute -top-4 -right-1.5 bg-red-600 text-white text-xs rounded-full px-1.5 py-0.5 flex items-center justify-center">
+                        {cartItems.reduce((total, item) => total + item.quantity, 0)}
+                      </span>
+                    )}
+                  </div>
+                </Link>
               </div>
-              
+
               {/* No results message */}
-              {!isLoading && filteredProducts.length === 0 && searchTerm.length >= 3 && (
+              {!isLoading && filteredProducts.length === 0 && (
                 <div className="text-center py-12">
                   <div className="text-gray-500 text-lg mb-4">
-                    No products found for &ldquo;{searchTerm}&rdquo;
+                    {searchTerm.length >= 3
+                      ? `No products found for "${searchTerm}"`
+                      : 'No products available'
+                    }
                   </div>
-                  <button
-                    onClick={clearSearch}
-                    className="text-[#EFDF00] hover:underline"
-                  >
-                    Clear search
-                  </button>
+                  {searchTerm.length >= 3 && (
+                    <button
+                      onClick={clearSearch}
+                      className="text-[#EFDF00] hover:underline"
+                    >
+                      Clear search
+                    </button>
+                  )}
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-  {isLoading ? (
-        <div className="flex items-center justify-center h-full mx-auto">
-    <Loader  />
-    </div>
-  ) : (
-    currentProducts.map((product: Product, index: number) => (
-      <motion.div
-        key={product.item_id}
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: index * 0.1 }}
-      >
-        <ProductCard
-          product={product}
-          onAddToCart={() => handleAddToCart(product)}
-          auth={""}
-        />
-      </motion.div>
-    ))
-  )}
-</div>
+                {isLoading ? (
+                  <div className="flex items-center justify-center h-full mx-auto">
+                    <Loader />
+                  </div>
+                ) : (
+                  filteredProducts.map((product: Product, index: number) => (
+                    <motion.div
+                      key={product.item_id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                    >
+                      <ProductCard
+                        product={product}
+                        onAddToCart={() => handleAddToCart(product)}
+                        auth={""}
+                      />
+                    </motion.div>
+                  ))
+                )}
+              </div>
 
               {/* Pagination */}
-{!isLoading && filteredProducts.length > 0 && (
-  <div className="flex justify-center items-center space-x-2 my-8">
-    <button
-      onClick={() => paginate(currentPage - 1)}
-      disabled={currentPage === 1}
-      className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      Previous
-    </button>
-    
-    {pageNumbers.map((number) => (
-      <button
-        key={number}
-        onClick={() => paginate(number)}
-        className={`px-4 py-2 rounded-md border text-sm font-medium ${
-          currentPage === number
-            ? 'bg-black text-white border-black'
-            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-        }`}
-      >
-        {number}
-      </button>
-    ))}
-    
-    <button
-      onClick={() => paginate(currentPage + 1)}
-      disabled={currentPage === totalPages}
-      className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-    >
-      Next
-    </button>
-  </div>
-)}
+              {!isLoading && pagination.totalPages > 1 && (
+                <div className="flex flex-col items-center space-y-4 my-8">
+                  {/* Pagination info */}
+
+
+                  {/* Pagination controls */}
+                  <div className="flex justify-center items-center space-x-2">
+                    <button
+                      onClick={() => paginate(pagination.currentPage - 1)}
+                      disabled={!pagination.hasPrevPage}
+                      className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Previous
+                    </button>
+
+                    {getPageNumbers().map((number) => (
+                      <button
+                        key={number}
+                        onClick={() => paginate(number)}
+                        className={`px-4 py-2 rounded-md border text-sm font-medium ${pagination.currentPage === number
+                          ? 'bg-black text-white border-black'
+                          : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                          }`}
+                      >
+                        {number}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => paginate(pagination.currentPage + 1)}
+                      disabled={!pagination.hasNextPage}
+                      className="px-4 py-2 rounded-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
@@ -693,11 +752,11 @@ const Products = () => {
       </main>
       {!isLoading && (
 
-      <Footer />
+        <Footer />
       )}
     </div>
   );
-  
+
 };
 
 export default Products;
