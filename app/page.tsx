@@ -226,7 +226,8 @@ export default function Login() {
       className="w-full  flex justify-center items-center relative sm:p-0 sm:pt-0 p-6 pt-16"
       style={{ backgroundColor: rightBgColor }}
     >
-      <h1 className="sm:text-3xl text-xl absolute sm:top-28 top-56 items-center tracking-wider text-white justify-center font-sans font-light ">Welcome to Topline Ordering Portal</h1>
+      <h1 className="sm:text-3xl text-xl absolute sm:top-28 top-56 items-center tracking-wider text-white justify-center font-sans font-light ">Welcome to Dealers Ordering Portal</h1>
+      
       <div className="text-center mb-4 text-lg font-sans font-semibold">
       </div>
   

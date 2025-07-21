@@ -302,6 +302,7 @@ const CartPage: React.FC = () => {
   const [cartSummary, setCartSummary] = useState<CartSummary | null>(null);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
+  const [showUPI, setShowUPI] = useState(false);
 
   const retrieveToken = () => {
     if (typeof window !== 'undefined') {
@@ -591,7 +592,7 @@ const CartPage: React.FC = () => {
     }
   };
 
-  const paymentOptions = ['NET BANKING'];
+  const paymentOptions = ['NET BANKING', 'UPI'];
   const pageTitle = "Orders";
 
   const handleProceed = () => {
@@ -685,6 +686,7 @@ const CartPage: React.FC = () => {
       payment_mode: paymentDetails.mode,
       contact_name: paymentDetails.contact_name,
       contact_phone: paymentDetails.contact_phone,
+      upi_used: showUPI, // or qr_image: showQR ? '/img/QR.jpg' : null
     };
 
     // Add shipping address logic
@@ -1004,11 +1006,15 @@ const CartPage: React.FC = () => {
                               <p><span className="font-semibold">Bank:</span> Kotak Mahindra Bank</p>
                               <p><span className="font-semibold">Account No.:</span> 06772000004324</p>
                               <p><span className="font-semibold">IFSC:</span> KKBK0000217</p>
+                              <p><span className="font-semibold">Branch:</span> KOTAK MAHINDRA BANK, KARKARDOOMA, Delhi</p>
+                              <p><span className="font-semibold">City:</span> Delhi</p>
                             </div>
 
-                            <div className="w-40 h-40 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
-                              <img src="/img/QR.jpeg" className='w-40 h-40' alt="QR Code" />
-                            </div>
+                            {showUPI && (
+                              <div className="w-52 h-52 bg-gray-100 flex items-center justify-center border-gray-300 rounded-lg pb-3">
+                                <img src="/img/QR.jpg" className='w-52 h-52' alt="QR Code" />
+                              </div>
+                            )}
                           </div>
                         </AnimatePresence>
 
@@ -1020,7 +1026,10 @@ const CartPage: React.FC = () => {
                               <CustomDropdown
                                 options={paymentOptions}
                                 selectedOption={paymentDetails.mode}
-                                onOptionSelect={(option) => setPaymentDetails({ ...paymentDetails, mode: option })}
+                                onOptionSelect={(option) => {
+                                  setPaymentDetails({ ...paymentDetails, mode: option });
+                                  setShowUPI(option === 'UPI');
+                                }}
                               />
                             </div>
                           </div>
@@ -1042,14 +1051,14 @@ const CartPage: React.FC = () => {
                           </div>
 
                           <div className="space-y-2">
-                            <label htmlFor="reference" className="block text-sm font-medium text-gray-700">UTR Number</label>
+                            <label htmlFor="reference" className="block text-sm font-medium text-gray-700">UTR Number/Transaction ID</label>
                             <div className="flex items-center">
                               <Hash className="text-gray-400 mr-2" />
                               <input
                                 type="text"
                                 id="reference"
                                 name="reference"
-                                placeholder="Enter UTR Number"
+                                placeholder="Enter UTR Number/Transaction ID"
                                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
                                 value={paymentDetails.reference}
                                 onChange={handleInputChange}

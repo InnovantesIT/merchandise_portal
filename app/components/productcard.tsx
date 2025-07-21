@@ -211,7 +211,7 @@ const ProductCard: React.FC<CardProps> = ({ product, onAddToCart, auth }) => {
         <div className="flex items-center justify-center gap-2 text-sm text-gray-600">
           <span>Amount to be Paid Now</span>
           <ArrowRight size={16} className="text-gray-400" />
-          <span className="font-bold text-lg text-gray-800">₹{product.rate}</span>
+          <span className="font-semibold text-base text-gray-800">₹{product.rate}</span>
         </div>
         
         <div className="text-xs text-gray-500">

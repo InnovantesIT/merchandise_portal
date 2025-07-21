@@ -197,7 +197,7 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute right-0 mt-3 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-[1000]"
+                  className="absolute right-0 mt-3 w-54 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-[1000]"
                 >
                  <div className="py-1">
   <a
@@ -219,17 +219,23 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     href="mailto:support1@toplineindia.com"
     target="_blank"
     rel="noopener noreferrer"
-    className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+    className="group flex flex-col items-start px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
   >
-    <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-    Email Support
+    <span className="flex items-center">
+      <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+      Email Support
+    </span>
+    <span className="ml-8 text-xs text-gray-400 flex  text-wrap">support1@toplineindia.com</span>
   </a>
   <a
     href="tel:+919711634046"
-    className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+    className="group flex flex-col items-start px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
   >
-    <Phone className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-    Tel Support
+    <span className="flex items-center">
+      <Phone className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+      Tel Support
+    </span>
+    <span className="ml-8 text-xs text-gray-400">+91 9711634046</span>
   </a>
   <button
     onClick={handleLogout}
@@ -349,25 +355,31 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                   </span>
                 </div>
               </Link>
-              <div className="flex gap-3">
-                <LifeBuoy />
-                <a
-                  href="mailto:support1@toplineindia.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
-                >
-                  Email Support
-                </a>
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-3 items-center">
+                  <LifeBuoy />
+                  <a
+                    href="mailto:support1@toplineindia.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
+                  >
+                    Email Support
+                  </a>
+                </div>
+                <span className="ml-8 text-xs text-gray-400">support1@toplineindia.com</span>
               </div>
-              <div className="flex gap-3">
-                <Phone />
-                <a
-                  href="tel:+919711634046"
-                  className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
-                >
-                  Tel Support
-                </a>
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-3 items-center">
+                  <Phone />
+                  <a
+                    href="tel:+919711634046"
+                    className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
+                  >
+                    Tel Support
+                  </a>
+                </div>
+                <span className="ml-8 text-xs text-gray-400">+91 9711634046</span>
               </div>
               <div className="flex gap-3">
                 <LogOut />
