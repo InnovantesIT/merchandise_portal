@@ -408,6 +408,26 @@ const [contactPhone, setContactPhone] = useState<string>('');
       <main className="max-w-9xl mx-auto font-sans">
         <Header cartItemCount={0} />
         <div className="py-8 md:py-12 mx-auto max-w-6xl px-4 md:px-6 lg:px-8">
+          {/* Support Contact Information */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-gray-700">
+              For any support related to your orders, please contact{' '}
+              <a
+                href="tel:+919711634046"
+                className="text-blue-600 hover:text-blue-800 font-medium underline"
+              >
+                +91 9711634046
+              </a>{' '}
+              or email us at{' '}
+              <a
+                href="mailto:support1@toplineindia.com"
+                className="text-blue-600 hover:text-blue-800 font-medium underline"
+              >
+                support1@toplineindia.com
+              </a>
+            </p>
+          </div>
+
           <div className="flex flex-col sm:justify-start justify-between items-start  mb-8">
             <div className="flex items-center gap-3 mb-4 md:mb-0">
               <History strokeWidth={1.25} />

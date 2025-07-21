@@ -176,21 +176,39 @@ function ProfilePage() {
             <FieldRow icon={<Building size={20} />} label="Company Name" value={name} />
             <FieldRow icon={<MapPin size={20} />} label="Address" value={formatAddress()} />
             <FieldRow icon={<CreditCard size={20} />} label="GST Number" value={gst} />
-            <FieldRow icon={<Phone size={20} />} label="Mobile" value={mobile} />
-            <FieldRow
-              icon={<Mail size={20} />}
-              label="Email"
-              value={email}
-            />
+            <div className="flex items-start gap-3">
+              <div className="text-gray-500 mt-1"><Phone size={20} /></div>
+              <div>
+                <span className="block text-sm font-medium text-gray-600">Mobile</span>
+                <a 
+                  href={`tel:${mobile}`} 
+                  className="text-black-600  font-sans"
+                >
+                  {mobile || '--'}
+                </a>
+              </div>
+            </div>           
+            <div className="flex items-start gap-3">
+              <div className="text-gray-500 mt-1"><Mail size={20} /></div>
+              <div>
+                <span className="block text-sm font-medium text-gray-600">Email</span>
+                <a 
+                  href={`mailto:${email}`} 
+                  className="text-gray-800 font-sans"
+                >
+                  {email || '--'}
+                </a>
+              </div>
+            </div>
           </div>
 
-          <button
+          {/* <button
             onClick={handleEditClick}
             className="mt-6 inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition"
           >
             <Edit size={20} />
             <span>Edit Email</span>
-          </button>
+          </button> */}
         </motion.div>
       </div>
 

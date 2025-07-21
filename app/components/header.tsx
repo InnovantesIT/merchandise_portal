@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Menu, X, LogOut, UserCircle, LifeBuoy, House, Package, ShoppingCart } from 'lucide-react';
+import { Menu, X, LogOut, UserCircle, LifeBuoy, House, Package, ShoppingCart, Phone, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface HeaderProps {
@@ -200,6 +200,15 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
                   className="absolute right-0 mt-3 w-44 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-[1000]"
                 >
                  <div className="py-1">
+  <a
+    href="https://toplineindia.com/about-us/"
+    target="_blank"
+    rel="noopener noreferrer"
+    className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+  >
+    <ExternalLink className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+    About Us
+  </a>
   <Link href="/profile">
     <div className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900 cursor-pointer">
       <UserCircle className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
@@ -207,22 +216,28 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
     </div>
   </Link>
   <a
-    href="mailto:support@xyz.com"
+    href="mailto:support1@toplineindia.com"
     target="_blank"
     rel="noopener noreferrer"
     className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
   >
     <LifeBuoy className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-    Support
+    Email Support
   </a>
-
-                    <button
-                      onClick={handleLogout}
-                      className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
-                    >
-                      <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-                      Logout
-                    </button>
+  <a
+    href="tel:+919711634046"
+    className="group flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+  >
+    <Phone className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+    Tel Support
+  </a>
+  <button
+    onClick={handleLogout}
+    className="group flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+  >
+    <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
+    Logout
+  </button>
                   </div>
                 </motion.div>
               )}
@@ -315,6 +330,17 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               )}
 
               {/* Profile, Support, and Logout for mobile */}
+              <a
+                href="https://toplineindia.com/about-us/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex gap-3"
+              >
+                <ExternalLink />
+                <span className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans">
+                  About Us
+                </span>
+              </a>
               <Link href="/profile">
                 <div className="flex gap-3">
                   <UserCircle />
@@ -326,12 +352,21 @@ const Header: React.FC<HeaderProps> = ({ cartItemCount }) => {
               <div className="flex gap-3">
                 <LifeBuoy />
                 <a
-                  href="mailto:support@xyz.com"
+                  href="mailto:support1@toplineindia.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
                 >
-                  Support
+                  Email Support
+                </a>
+              </div>
+              <div className="flex gap-3">
+                <Phone />
+                <a
+                  href="tel:+919711634046"
+                  className="block text-xl cursor-pointer transition duration-300 ease-in-out text-white hover:text-[#EFDF00] font-sans"
+                >
+                  Tel Support
                 </a>
               </div>
               <div className="flex gap-3">
