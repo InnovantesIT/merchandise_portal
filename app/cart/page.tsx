@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
 import { Smartphone, Calendar, Hash } from 'lucide-react';
@@ -17,6 +17,7 @@ import ShippingAddressDropdown from '../components/shippingaddressdropdown';
 import { ArrowRight } from 'lucide-react';
 import AddressModal from '../components/addressmodal';
 import { IndianRupee } from 'lucide-react';
+import BillingDetails from '../components/BillingDetails';
 
 interface Product {
   id: number;
@@ -56,6 +57,23 @@ interface Address {
   fax: string;
 }
 
+interface BillingAddress {
+  address_id: string | null;
+  attention: string | null;
+  address: string | null;
+  street2: string | null;
+  city: string | null;
+  state: string | null;
+  state_code: string | null;
+  country: string | null;
+  country_code: string | null;
+  zip: string | null;
+  phone: string | null;
+  fax: string | null;
+  gst_no?: string;
+  email?: string;
+}
+
 interface CustomShippingAddress {
   attention: string;
   address: string;
@@ -86,11 +104,34 @@ const CartItem: React.FC<{
   product: Product;
   onRemove: (product: Product) => void;
   onUpdateQuantity: (product: Product, change: number) => void;
+  onSetQuantity: (product: Product, quantity: number) => void;
   canEditItems: boolean;
   cartSummary?: CartSummary | null;
-}> = ({ product, onRemove, onUpdateQuantity, canEditItems, cartSummary }) => {
+}> = ({ product, onRemove, onUpdateQuantity, onSetQuantity, canEditItems, cartSummary }) => {
   const hasMOQ = product.moq && product.moq > 0;
   const isAtMOQ = hasMOQ ? product.quantity <= product.moq : false;
+  const [inputValue, setInputValue] = useState(product.quantity.toString());
+
+  useEffect(() => {
+    setInputValue(product.quantity.toString());
+  }, [product.quantity]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputBlur = () => {
+    const newQuantity = parseInt(inputValue, 10);
+    if (!isNaN(newQuantity) && newQuantity > 0) {
+      if (hasMOQ && newQuantity < product.moq) {
+        onSetQuantity(product, product.moq);
+      } else {
+        onSetQuantity(product, newQuantity);
+      }
+    } else {
+      setInputValue(product.quantity.toString());
+    }
+  };
 
   return (
     <motion.div
@@ -125,9 +166,15 @@ const CartItem: React.FC<{
             <Minus size={16} />
           </button>
 
-          <div className="w-12 text-center font-semibold">
-            {product.quantity}
-          </div>
+          <input
+            type="number"
+            value={inputValue}
+            onChange={handleInputChange}
+            onBlur={handleInputBlur}
+            className="w-16 text-center font-semibold border-x-0"
+            disabled={!canEditItems}
+          />
+
           <button
             onClick={() => onUpdateQuantity(product, 1)}
             disabled={!canEditItems}
@@ -303,6 +350,10 @@ const CartPage: React.FC = () => {
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
   const router = useRouter();
   const [showUPI, setShowUPI] = useState(false);
+  const [billingDetails, setBillingDetails] = useState<BillingAddress | null>(null);
+  const [isBillingDetailsValid, setIsBillingDetailsValid] = useState(false);
+  const [billingDetailsError, setBillingDetailsError] = useState(false);
+  const billingDetailsRef = useRef<HTMLDivElement>(null);
 
   const retrieveToken = () => {
     if (typeof window !== 'undefined') {
@@ -496,6 +547,77 @@ const CartPage: React.FC = () => {
     }
   };
 
+  const handleSetQuantity = async (product: Product, newQuantity: number) => {
+    const token = retrieveToken();
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
+    if (newQuantity <= 0) {
+      handleRemoveFromCart(product);
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${baseURL}/api/add-cart`, {
+        item_id: product.item_id,
+        quantity: newQuantity,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          brand: 'renault',
+        },
+      });
+
+      if (response.status === 200) {
+        if (response.data && response.data.data) {
+          const updatedCartItems = response.data.data.map((item: Product) => ({
+            ...item,
+            moq: item.moq || 1
+          }));
+
+          setCartItems(updatedCartItems);
+
+          if (response.data.cart_summary) {
+            setCartSummary(response.data.cart_summary);
+            setGrandTotal(response.data.cart_summary.cart_total);
+          }
+
+          setErrorMessage(null);
+        } else {
+          const cartResponse = await axios.get(`${baseURL}/api/cart-by-user-id`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
+            ...item,
+            moq: item.moq || 1
+          }));
+
+          setCartItems(cartItemsWithMOQ);
+
+          if (cartResponse.data.cart_summary) {
+            setCartSummary(cartResponse.data.cart_summary);
+            setGrandTotal(cartResponse.data.cart_summary.cart_total);
+          } else {
+            setCartSummary(null);
+            setGrandTotal(0);
+          }
+          setErrorMessage(null);
+        }
+      } else {
+        console.error('Failed to update quantity:', response);
+        setErrorMessage('Failed to update item quantity.');
+      }
+    } catch (error) {
+      console.error('Error updating quantity:', error);
+      setErrorMessage('Failed to update item quantity.');
+    }
+  };
+
   const handleRemoveFromCart = async (product: Product) => {
     const token = retrieveToken();
     if (!token) {
@@ -600,6 +722,14 @@ const CartPage: React.FC = () => {
       setErrorMessage("Your cart is empty. Add items before proceeding.");
       return;
     }
+
+    for (const item of cartItems) {
+      if (item.moq && item.quantity < item.moq) {
+        setErrorMessage(`Quantity for ${item.item_name} is below the minimum order quantity of ${item.moq}.`);
+        return;
+      }
+    }
+
     setIsAnimating(true);
     setTimeout(() => {
       setIsAnimating(false);
@@ -653,6 +783,12 @@ const CartPage: React.FC = () => {
 
     if (!paymentDetails.contact_name || !paymentDetails.contact_phone) {
       setErrorMessage("Please fill in all details.");
+      return;
+    }
+
+    if (!isBillingDetailsValid) {
+      setBillingDetailsError(true);
+      billingDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       return;
     }
 
@@ -750,6 +886,14 @@ const CartPage: React.FC = () => {
     setPaymentDetails((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  const handleBillingDetailsChange = (details: BillingAddress, isValid: boolean) => {
+    setBillingDetails(details);
+    setIsBillingDetailsValid(isValid);
+    if (isValid) {
+      setBillingDetailsError(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-white">
       <Head>
@@ -828,6 +972,7 @@ const CartPage: React.FC = () => {
                                 product={product}
                                 onRemove={handleRemoveFromCart}
                                 onUpdateQuantity={handleUpdateQuantity}
+                                onSetQuantity={handleSetQuantity}
                                 canEditItems={canEditItems}
                                 cartSummary={cartSummary}
                               />
@@ -907,29 +1052,10 @@ const CartPage: React.FC = () => {
                     <OrderSummaryTable cartItems={cartItems} cartSummary={cartSummary!} />
                   </motion.div>
 
-                  <div className="space-y-2">
-                    <label htmlFor="contactName" className="block text-sm font-medium text-black">Contact Name of the person at the Dealership *</label>
-                    <input
-                      type="text"
-                      id="contactName"
-                      name="contact_name"
-                      placeholder="Enter contact name here"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black mb-3"
-                      value={paymentDetails.contact_name}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label htmlFor="contactPhone" className="block text-sm font-medium text-black mt-2">Phone number of the contact person *</label>
-                    <input
-                      type="text"
-                      id="contactPhone"
-                      name="contact_phone"
-                      placeholder="Enter contact phone here"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
-                      value={paymentDetails.contact_phone}
-                      onChange={handleInputChange}
+                  <div className="mt-6" ref={billingDetailsRef}>
+                    <BillingDetails
+                      onBillingDetailsChange={handleBillingDetailsChange}
+                      showError={billingDetailsError}
                     />
                   </div>
 
@@ -984,6 +1110,32 @@ const CartPage: React.FC = () => {
                       <span className="block sm:inline">{errorMessage}</span>
                     </div>
                   )}
+
+<div className="space-y-2">
+                    <label htmlFor="contactName" className="block text-sm font-medium text-black">Contact Name of the person at the Dealership *</label>
+                    <input
+                      type="text"
+                      id="contactName"
+                      name="contact_name"
+                      placeholder="Enter contact name here"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black mb-3"
+                      value={paymentDetails.contact_name}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="contactPhone" className="block text-sm font-medium text-black mt-2">Phone number of the contact person *</label>
+                    <input
+                      type="text"
+                      id="contactPhone"
+                      name="contact_phone"
+                      placeholder="Enter contact phone here"
+                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-black focus:border-black"
+                      value={paymentDetails.contact_phone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
 
                   <AnimatePresence mode="wait">
                     {showPaymentDetails && isPaymentPlaced && grandTotal > 0 && (
