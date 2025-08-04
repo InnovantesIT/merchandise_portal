@@ -13,6 +13,7 @@ interface UserProfile {
   email: string;
   city: string;
   state: string;
+  address: string;
 }
 
 interface UserProfileModalProps {
@@ -58,8 +59,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   };
 
   const isFormValid = () => {
-    const { name, mobile, gst } = formData;
-    return name && mobile && gst;
+    const { name, mobile, gst, address } = formData;
+    return name && mobile && gst && address;
   };
 
   const handleConfirm = () => {
@@ -126,6 +127,17 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 maxLength={15}
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Billing Address *</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address || ''}
+                onChange={handleInputChange}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                placeholder="Enter billing address"
+              />
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
@@ -150,7 +162,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 />
               </div>
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <input
                 type="email"
@@ -160,7 +172,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 placeholder="Email"
                 disabled
               />
-            </div>
+            </div> */}
           </div>
 
           <div className="flex justify-end gap-3 p-6 border-t">

@@ -31,6 +31,7 @@ interface UserProfile {
   email: string;
   city: string;
   state: string;
+  address: string;
 }
 
 const FieldRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
@@ -102,6 +103,7 @@ function ProfilePage() {
       phone: profile.mobile,
       gst_no: profile.gst,
       billing_address: {
+        address: profile.address,
         city: profile.city,
         state: profile.state,
       }
@@ -166,7 +168,7 @@ function ProfilePage() {
                 </a>
               </div> */}
             {/* </div> */}
-            <div className="flex items-start gap-3">
+            {/* <div className="flex items-start gap-3">
               <div className="text-gray-500 mt-1"><Mail size={20} /></div>
               <div>
                 <span className="block text-sm font-medium text-gray-600">Email</span>
@@ -177,7 +179,7 @@ function ProfilePage() {
                   {email || '--'}
                 </a>
               </div>
-            </div>
+            </div> */}
           </div>
         </motion.div>
       </div>
@@ -186,7 +188,7 @@ function ProfilePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleUpdateProfile}
-        userProfile={{ name, mobile, gst, email, city: billingAddress.city || '', state: billingAddress.state || '' }}
+        userProfile={{ name, mobile, gst, email, city: billingAddress.city || '', state: billingAddress.state || '', address: billingAddress.address || '' }}
       />
     </main>
   );
