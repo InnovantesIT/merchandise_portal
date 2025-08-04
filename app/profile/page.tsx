@@ -5,7 +5,7 @@ import Header from '@/app/components/header';
 import { useRouter } from 'next/navigation';
 import { decrypt } from '@/app/action/enc';
 import { motion } from 'framer-motion';
-import { Edit, Mail, Phone, MapPin, CreditCard, Building } from 'lucide-react';
+import { Edit, Mail, Phone, MapPin, CreditCard, Building, User } from 'lucide-react';
 import UserProfileModal from '@/app/components/UserProfileModal';
 
 type BillingAddress = {
@@ -25,7 +25,7 @@ type BillingAddress = {
 };
 
 interface UserProfile {
-  name: string;
+  attention: string; // This is for the company name in the modal
   mobile: string;
   gst: string;
   email: string;
@@ -34,12 +34,12 @@ interface UserProfile {
   address: string;
 }
 
-const FieldRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+const FieldRow: React.FC<{ icon: React.ReactNode; label: string; value: React.ReactNode }> = ({ icon, label, value }) => (
   <div className="flex items-start gap-3">
     <div className="text-gray-500 mt-1">{icon}</div>
     <div>
       <span className="block text-sm font-medium text-gray-600">{label}</span>
-      <p className="text-gray-800 font-sans">{value || '--'}</p>
+      <div className="text-gray-800 font-sans">{value || '--'}</div>
     </div>
   </div>
 );
@@ -52,6 +52,7 @@ function ProfilePage() {
   const [billingAddress, setBillingAddress] = useState<BillingAddress>({});
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const router = useRouter();
 
   const retrieveToken = () => {
@@ -73,7 +74,7 @@ function ProfilePage() {
         headers: { Authorization: `Bearer ${token}`, brand: 'renault' },
       });
 
-      setName(data.company_name);
+      setName(data.attention);
       setEmail(data.email);
       setMobile(data.phone);
       setGST(data.gst_no);
@@ -97,15 +98,17 @@ function ProfilePage() {
   const handleUpdateProfile = async (profile: UserProfile) => {
     const token = retrieveToken();
     if (!token) return;
+    setUpdateError(null);
 
     const payload = {
-      company_name: profile.name,
+      attention: name, // User's name from state
       phone: profile.mobile,
       gst_no: profile.gst,
       billing_address: {
         address: profile.address,
         city: profile.city,
         state: profile.state,
+        attention: profile.attention, // Company name from modal
       }
     };
 
@@ -118,7 +121,7 @@ function ProfilePage() {
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error updating user details:', error);
-      alert('Failed to update profile. Please try again.');
+      setUpdateError('Failed to update profile. Please try again.');
     }
   };
 
@@ -151,44 +154,25 @@ function ProfilePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FieldRow icon={<Building size={20} />} label="Company Name" value={name} />
+            <FieldRow icon={<Building size={20} />} label="Company Name" value={billingAddress.attention || '--'} />
             <FieldRow icon={<MapPin size={20} />} label="Address" value={formatAddress()} />
             <FieldRow icon={<MapPin size={20} />} label="City" value={billingAddress.city || '--'} />
             <FieldRow icon={<MapPin size={20} />} label="State" value={billingAddress.state || '--'} />
             <FieldRow icon={<CreditCard size={20} />} label="GST Number" value={gst} />
-            {/* <div className="flex items-start gap-3"> */}
-              {/* <div className="text-gray-500 mt-1"><Phone size={20} /></div>
-              <div>
-                <span className="block text-sm font-medium text-gray-600">Mobile</span>
-                <a
-                  href={`tel:${mobile}`}
-                  className="text-black-600  font-sans"
-                >
-                  {mobile || '--'}
-                </a>
-              </div> */}
-            {/* </div> */}
-            {/* <div className="flex items-start gap-3">
-              <div className="text-gray-500 mt-1"><Mail size={20} /></div>
-              <div>
-                <span className="block text-sm font-medium text-gray-600">Email</span>
-                <a
-                  href={`mailto:${email}`}
-                  className="text-gray-800 font-sans"
-                >
-                  {email || '--'}
-                </a>
-              </div>
-            </div> */}
+           
           </div>
         </motion.div>
       </div>
 
       <UserProfileModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setUpdateError(null);
+        }}
         onConfirm={handleUpdateProfile}
-        userProfile={{ name, mobile, gst, email, city: billingAddress.city || '', state: billingAddress.state || '', address: billingAddress.address || '' }}
+        userProfile={{ attention: billingAddress.attention || '', mobile, gst, email, city: billingAddress.city || '', state: billingAddress.state || '', address: billingAddress.address || '' }}
+        updateError={updateError}
       />
     </main>
   );

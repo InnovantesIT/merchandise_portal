@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import gstMapping from '../gst.json';
 import states from '../state.json';
 interface UserProfile {
-  name: string;
+  attention: string;
   mobile: string;
   gst: string;
   email: string;
@@ -19,17 +19,20 @@ interface UserProfile {
 interface UserProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (profile: UserProfile) => void;
+  onConfirm: (profile: UserProfile) => void | Promise<void>;
   userProfile: UserProfile;
+  updateError: string | null;
 }
 
 const UserProfileModal: React.FC<UserProfileModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  userProfile
+  userProfile,
+  updateError
 }) => {
   const [formData, setFormData] = useState<UserProfile>(userProfile);
+  const [gstError, setGstError] = useState<string | null>(null);
 
   useEffect(() => {
     setFormData(userProfile);
@@ -40,17 +43,29 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
     let updatedFormData = { ...formData, [name]: value };
 
     if (name === 'gst') {
+      setGstError(null);
       const gstValue = value.toUpperCase().slice(0, 15);
       updatedFormData = { ...formData, [name]: gstValue };
 
-      if (gstValue) {
+      if (gstValue.startsWith('97') || gstValue.startsWith('99')) {
+        setGstError("Please enter a GST number for a different state.");
+        updatedFormData = { ...updatedFormData, state: '' };
+      } else if (!gstValue) {
+        updatedFormData = { ...updatedFormData, state: '' };
+      } else {
         const stateCode = gstValue.substring(0, 2);
         const stateName = (gstMapping as Record<string, string>)[stateCode];
-        if (stateName) {
+        if (stateName === '-') {
+          updatedFormData = { ...updatedFormData, state: '-' };
+        } else if (stateName) {
           const stateObj = states.find(s => s.name === stateName);
           if (stateObj) {
             updatedFormData = { ...updatedFormData, state: stateName };
+          } else {
+            updatedFormData = { ...updatedFormData, state: '' };
           }
+        } else {
+          updatedFormData = { ...updatedFormData, state: '' };
         }
       }
     }
@@ -59,8 +74,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
   };
 
   const isFormValid = () => {
-    const { name, mobile, gst, address } = formData;
-    return name && mobile && gst && address;
+    const { attention, mobile, gst, address } = formData;
+    return attention && mobile && gst && address && !gstError;
   };
 
   const handleConfirm = () => {
@@ -97,8 +112,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
               <label className="block text-sm font-medium text-gray-700 mb-1">Company Name *</label>
               <input
                 type="text"
-                name="name"
-                value={formData.name || ''}
+                name="attention"
+                value={formData.attention || ''}
                 onChange={handleInputChange}
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 placeholder="Enter company name"
@@ -126,6 +141,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 placeholder="Enter GST Number"
                 maxLength={15}
               />
+              {gstError && <p className="text-red-500 text-sm mt-1">{gstError}</p>}
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Billing Address *</label>
@@ -174,7 +190,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
               />
             </div> */}
           </div>
-
+          {updateError && <p className="text-red-500 text-sm p-6 pt-0">{updateError}</p>}
           <div className="flex justify-end gap-3 p-6 border-t">
             <button onClick={onClose} className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
               Cancel
