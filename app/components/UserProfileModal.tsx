@@ -4,11 +4,15 @@ import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+import gstMapping from '../gst.json';
+import states from '../state.json';
 interface UserProfile {
   name: string;
   mobile: string;
   gst: string;
   email: string;
+  city: string;
+  state: string;
 }
 
 interface UserProfileModalProps {
@@ -32,7 +36,25 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    let updatedFormData = { ...formData, [name]: value };
+
+    if (name === 'gst') {
+      const gstValue = value.toUpperCase().slice(0, 15);
+      updatedFormData = { ...formData, [name]: gstValue };
+
+      if (gstValue) {
+        const stateCode = gstValue.substring(0, 2);
+        const stateName = (gstMapping as Record<string, string>)[stateCode];
+        if (stateName) {
+          const stateObj = states.find(s => s.name === stateName);
+          if (stateObj) {
+            updatedFormData = { ...updatedFormData, state: stateName };
+          }
+        }
+      }
+    }
+
+    setFormData(updatedFormData);
   };
 
   const isFormValid = () => {
@@ -60,9 +82,9 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
           initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.95, opacity: 0 }}
-          className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto"
+          className="bg-white rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto mt-7 "
         >
-          <div className="flex justify-between items-center p-6 border-b">
+          <div className="flex justify-between items-center p-6 border-b my-auto">
             <h2 className="text-xl font-semibold">Edit Profile</h2>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <X size={24} />
@@ -81,7 +103,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 placeholder="Enter company name"
               />
             </div>
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Mobile *</label>
               <input
                 type="text"
@@ -91,7 +113,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 className="w-full p-3 border border-gray-300 rounded-lg"
                 placeholder="Enter mobile number"
               />
-            </div>
+            </div> */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">GST Number *</label>
               <input
@@ -103,6 +125,30 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 placeholder="Enter GST Number"
                 maxLength={15}
               />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={formData.city || ''}
+                  onChange={handleInputChange}
+                  className="w-full p-3 border border-gray-300 rounded-lg"
+                  placeholder="Enter city"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                <input
+                  type="text"
+                  name="state"
+                  value={formData.state || ''}
+                  className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100"
+                  placeholder="State"
+                  disabled
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>

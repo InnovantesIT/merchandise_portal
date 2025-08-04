@@ -29,6 +29,8 @@ interface UserProfile {
   mobile: string;
   gst: string;
   email: string;
+  city: string;
+  state: string;
 }
 
 const FieldRow: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
@@ -87,7 +89,7 @@ function ProfilePage() {
   }, [router]);
 
   const formatAddress = () =>
-    [billingAddress.address, billingAddress.city, billingAddress.state, billingAddress.zip, billingAddress.country]
+    [billingAddress.address, billingAddress.zip, billingAddress.country]
       .filter(Boolean)
       .join(', ');
 
@@ -99,6 +101,10 @@ function ProfilePage() {
       company_name: profile.name,
       phone: profile.mobile,
       gst_no: profile.gst,
+      billing_address: {
+        city: profile.city,
+        state: profile.state,
+      }
     };
 
     try {
@@ -145,9 +151,11 @@ function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FieldRow icon={<Building size={20} />} label="Company Name" value={name} />
             <FieldRow icon={<MapPin size={20} />} label="Address" value={formatAddress()} />
+            <FieldRow icon={<MapPin size={20} />} label="City" value={billingAddress.city || '--'} />
+            <FieldRow icon={<MapPin size={20} />} label="State" value={billingAddress.state || '--'} />
             <FieldRow icon={<CreditCard size={20} />} label="GST Number" value={gst} />
-            <div className="flex items-start gap-3">
-              <div className="text-gray-500 mt-1"><Phone size={20} /></div>
+            {/* <div className="flex items-start gap-3"> */}
+              {/* <div className="text-gray-500 mt-1"><Phone size={20} /></div>
               <div>
                 <span className="block text-sm font-medium text-gray-600">Mobile</span>
                 <a
@@ -156,8 +164,8 @@ function ProfilePage() {
                 >
                   {mobile || '--'}
                 </a>
-              </div>
-            </div>
+              </div> */}
+            {/* </div> */}
             <div className="flex items-start gap-3">
               <div className="text-gray-500 mt-1"><Mail size={20} /></div>
               <div>
@@ -178,7 +186,7 @@ function ProfilePage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleUpdateProfile}
-        userProfile={{ name, mobile, gst, email }}
+        userProfile={{ name, mobile, gst, email, city: billingAddress.city || '', state: billingAddress.state || '' }}
       />
     </main>
   );

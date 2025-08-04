@@ -1052,13 +1052,7 @@ const CartPage: React.FC = () => {
                     <OrderSummaryTable cartItems={cartItems} cartSummary={cartSummary!} />
                   </motion.div>
 
-                  <div className="mt-6" ref={billingDetailsRef}>
-                    <BillingDetails
-                      onBillingDetailsChange={handleBillingDetailsChange}
-                      showError={billingDetailsError}
-                    />
-                  </div>
-
+                 
                   <div className="mt-6">
                     <label htmlFor="shipping-address-select" className="block text-2xl font-semibold my-2">Shipping Details *</label>
 
@@ -1136,6 +1130,13 @@ const CartPage: React.FC = () => {
                       onChange={handleInputChange}
                     />
                   </div>
+                  <div className="mt-6" ref={billingDetailsRef}>
+                    <BillingDetails
+                      onBillingDetailsChange={handleBillingDetailsChange}
+                      showError={billingDetailsError}
+                    />
+                  </div>
+
 
                   <AnimatePresence mode="wait">
                     {showPaymentDetails && isPaymentPlaced && grandTotal > 0 && (
