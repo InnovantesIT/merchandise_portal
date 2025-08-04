@@ -45,8 +45,11 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
     gst_no: '',
     email: ''
   });
+  const [originalBillingAddress, setOriginalBillingAddress] = useState<BillingAddress | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
   const baseURL = process.env.NEXT_PUBLIC_BASE_URL;
 
   const retrieveToken = () => {
@@ -91,6 +94,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
         };
 
         setBillingAddress(initialBillingDetails);
+        setOriginalBillingAddress(initialBillingDetails);
         validateAndCallback(initialBillingDetails);
 
       } catch (error) {
@@ -112,7 +116,7 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
   const handleConfirm = async (updatedAddress: BillingAddress) => {
     setBillingAddress(updatedAddress);
     validateAndCallback(updatedAddress);
-    setIsModalOpen(false);
+    setUpdateError(null);
 
     const token = retrieveToken();
     if (!token) return;
@@ -136,11 +140,23 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
     };
 
     try {
-      await axios.post(`${baseURL}/api/update-user-details`, payload, {
+      const response = await axios.post(`${baseURL}/api/update-user-details`, payload, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (response.status === 200) {
+        setOriginalBillingAddress(updatedAddress);
+        setUpdateSuccess(true);
+        setIsModalOpen(false);
+        setTimeout(() => {
+          setUpdateSuccess(false);
+        }, 3000);
+      }
     } catch (error) {
       console.error('Error updating user details:', error);
+      setUpdateError('Failed to update details. Please try again.');
+      if (originalBillingAddress) {
+        setBillingAddress(originalBillingAddress);
+      }
     }
   };
 
@@ -153,7 +169,10 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Billing Details</h2>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => {
+            setOriginalBillingAddress(billingAddress);
+            setIsModalOpen(true);
+          }}
           className="flex items-center gap-2 text-gray-700 hover:text-black"
         >
           <Edit3 size={18} />
@@ -170,12 +189,20 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
         <p><strong>City:</strong> {billingAddress.city || 'N/A'}</p>
         <p><strong>State:</strong> {billingAddress.state || 'N/A'}</p>
       </div>
+      {updateSuccess && <p className="text-green-500 text-sm mt-2">Details updated successfully!</p>}
       {showError && <p className="text-red-500 text-sm mt-2">Please complete your billing details before placing an order.</p>}
       <BillingAddressModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setUpdateError(null);
+          if (originalBillingAddress) {
+            setBillingAddress(originalBillingAddress);
+          }
+        }}
         onConfirm={handleConfirm}
         billingAddress={billingAddress}
+        updateError={updateError}
       />
     </div>
   );

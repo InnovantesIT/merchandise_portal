@@ -28,13 +28,15 @@ interface BillingAddressModalProps {
   onClose: () => void;
   onConfirm: (address: BillingAddress) => void;
   billingAddress: BillingAddress;
+  updateError: string | null;
 }
 
 const BillingAddressModal: React.FC<BillingAddressModalProps> = ({
   isOpen,
   onClose,
   onConfirm,
-  billingAddress
+  billingAddress,
+  updateError
 }) => {
   const [formData, setFormData] = useState<BillingAddress>(billingAddress);
   const [gstError, setGstError] = useState<string | null>(null);
@@ -43,7 +45,7 @@ const BillingAddressModal: React.FC<BillingAddressModalProps> = ({
     setFormData(billingAddress);
   }, [billingAddress, isOpen]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let updatedFormData = { ...formData, [name]: value };
 
@@ -52,28 +54,33 @@ const BillingAddressModal: React.FC<BillingAddressModalProps> = ({
       const gstValue = value.toUpperCase().slice(0, 15);
       updatedFormData = { ...formData, [name]: gstValue };
 
-      if (gstValue) {
+      if (!gstValue) {
+        updatedFormData = { ...updatedFormData, state: '', state_code: '' };
+      } else {
         const gstRegex = /^\d{2}[A-Z]{5}\d{4}[A-Z]{1}[A-Z\d]{1}[Z]{1}[A-Z\d]{1}$/;
-        if (!gstRegex.test(gstValue)) {
+        if (gstValue.startsWith('97') || gstValue.startsWith('99')) {
+          setGstError("Please enter a GST number for a different state.");
+          updatedFormData = { ...updatedFormData, state: '', state_code: '' };
+        } else if (!gstRegex.test(gstValue)) {
           setGstError("Invalid GST Number format.");
+          updatedFormData = { ...updatedFormData, state: '', state_code: '' };
         } else {
           const stateCode = gstValue.substring(0, 2);
           const stateName = (gstMapping as Record<string, string>)[stateCode];
-          if (stateName) {
+          if (stateName === '-') {
+            updatedFormData = { ...updatedFormData, state: '-', state_code: '' };
+          } else if (stateName) {
             const stateObj = states.find(s => s.name === stateName);
             if (stateObj) {
               updatedFormData = { ...updatedFormData, state: stateName, state_code: stateObj.code };
+            } else {
+              updatedFormData = { ...updatedFormData, state: '', state_code: '' };
             }
+          } else {
+            updatedFormData = { ...updatedFormData, state: '', state_code: '' };
           }
         }
       }
-    }
-    
-    if (name === 'state') {
-        const stateObj = states.find(s => s.name === value);
-        if (stateObj) {
-            updatedFormData = { ...updatedFormData, state_code: stateObj.code };
-        }
     }
 
     setFormData(updatedFormData);
@@ -163,23 +170,19 @@ const BillingAddressModal: React.FC<BillingAddressModalProps> = ({
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
-                <select
+                <input
+                  type="text"
                   name="state"
                   value={formData.state || ''}
-                  onChange={handleInputChange}
                   className="w-full p-3 border border-gray-300 rounded-lg bg-gray-100"
+                  placeholder="State"
                   disabled
-                >
-                  <option value="">Select State</option>
-                  {states.map(s => (
-                    <option key={s.code} value={s.name}>{s.name}</option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
            
           </div>
-
+          {updateError && <p className="text-red-500 text-sm p-6 pt-0">{updateError}</p>}
           <div className="flex justify-end gap-3 p-6 border-t">
             <button onClick={onClose} className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
               Cancel

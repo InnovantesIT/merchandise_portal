@@ -107,29 +107,22 @@ const CartItem: React.FC<{
   onSetQuantity: (product: Product, quantity: number) => void;
   canEditItems: boolean;
   cartSummary?: CartSummary | null;
-}> = ({ product, onRemove, onUpdateQuantity, onSetQuantity, canEditItems, cartSummary }) => {
+  inputValue: string;
+  onInputChange: (productId: number, value: string) => void;
+}> = ({ product, onRemove, onUpdateQuantity, onSetQuantity, canEditItems, cartSummary, inputValue, onInputChange }) => {
   const hasMOQ = product.moq && product.moq > 0;
   const isAtMOQ = hasMOQ ? product.quantity <= product.moq : false;
-  const [inputValue, setInputValue] = useState(product.quantity.toString());
-
-  useEffect(() => {
-    setInputValue(product.quantity.toString());
-  }, [product.quantity]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+    onInputChange(product.id, e.target.value);
   };
 
   const handleInputBlur = () => {
     const newQuantity = parseInt(inputValue, 10);
     if (!isNaN(newQuantity) && newQuantity > 0) {
-      if (hasMOQ && newQuantity < product.moq) {
-        onSetQuantity(product, product.moq);
-      } else {
-        onSetQuantity(product, newQuantity);
-      }
+      onSetQuantity(product, newQuantity);
     } else {
-      setInputValue(product.quantity.toString());
+      onInputChange(product.id, product.quantity.toString());
     }
   };
 
@@ -338,7 +331,7 @@ const CartPage: React.FC = () => {
     contact_name: '',
     contact_phone: '',
   });
-  const [cartItems, setCartItems] = useState<Product[]>([]);
+  const [cartItems, setCartItems] = useState<(Product & { inputValue: string })[]>([]);
   const [grandTotal, setGrandTotal] = useState<number>(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -397,7 +390,8 @@ const CartPage: React.FC = () => {
         } else {
           const cartItemsWithMOQ = response.data.data.map((item: Product) => ({
             ...item,
-            moq: item.moq || 1
+            moq: item.moq || 1,
+            inputValue: item.quantity.toString()
           }));
 
           setCartItems(cartItemsWithMOQ);
@@ -475,7 +469,7 @@ const CartPage: React.FC = () => {
     const hasMOQ = product.moq && product.moq > 0;
 
     if (change < 0 && hasMOQ && newQuantity < product.moq) {
-      setErrorMessage(`Cannot reduce quantity below minimum order quantity (${product.moq})`);
+      setErrorMessage('Please enter a value above or equal to the minimum order quantity.');
       return;
     }
 
@@ -496,7 +490,8 @@ const CartPage: React.FC = () => {
           if (response.data && response.data.data) {
             const updatedCartItems = response.data.data.map((item: Product) => ({
               ...item,
-              moq: item.moq || 1
+              moq: item.moq || 1,
+              inputValue: item.quantity.toString()
             }));
 
             setCartItems(updatedCartItems);
@@ -520,7 +515,8 @@ const CartPage: React.FC = () => {
 
             const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
               ...item,
-              moq: item.moq || 1
+              moq: item.moq || 1,
+              inputValue: item.quantity.toString()
             }));
 
             setCartItems(cartItemsWithMOQ);
@@ -574,7 +570,8 @@ const CartPage: React.FC = () => {
         if (response.data && response.data.data) {
           const updatedCartItems = response.data.data.map((item: Product) => ({
             ...item,
-            moq: item.moq || 1
+            moq: item.moq || 1,
+            inputValue: item.quantity.toString()
           }));
 
           setCartItems(updatedCartItems);
@@ -594,7 +591,8 @@ const CartPage: React.FC = () => {
 
           const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
             ...item,
-            moq: item.moq || 1
+            moq: item.moq || 1,
+            inputValue: item.quantity.toString()
           }));
 
           setCartItems(cartItemsWithMOQ);
@@ -657,7 +655,8 @@ const CartPage: React.FC = () => {
           } else {
             const cartItemsWithMOQ = cartResponse.data.data.map((item: Product) => ({
               ...item,
-              moq: item.moq || 1
+              moq: item.moq || 1,
+              inputValue: item.quantity.toString()
             }));
 
             setCartItems(cartItemsWithMOQ);
@@ -724,8 +723,9 @@ const CartPage: React.FC = () => {
     }
 
     for (const item of cartItems) {
-      if (item.moq && item.quantity < item.moq) {
-        setErrorMessage(`Quantity for ${item.item_name} is below the minimum order quantity of ${item.moq}.`);
+      const quantity = parseInt(item.inputValue, 10);
+      if (item.moq && (isNaN(quantity) || quantity < item.moq)) {
+        setErrorMessage('Please enter a value above or equal to the minimum order quantity.');
         return;
       }
     }
@@ -886,6 +886,14 @@ const CartPage: React.FC = () => {
     setPaymentDetails((prev: any) => ({ ...prev, [name]: value }));
   };
 
+  const handleCartItemInputChange = (productId: number, value: string) => {
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.id === productId ? { ...item, inputValue: value } : item
+      )
+    );
+  };
+
   const handleBillingDetailsChange = (details: BillingAddress, isValid: boolean) => {
     setBillingDetails(details);
     setIsBillingDetailsValid(isValid);
@@ -975,6 +983,8 @@ const CartPage: React.FC = () => {
                                 onSetQuantity={handleSetQuantity}
                                 canEditItems={canEditItems}
                                 cartSummary={cartSummary}
+                                inputValue={product.inputValue}
+                                onInputChange={handleCartItemInputChange}
                               />
                             ))}
 
