@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import axios from '@/app/lib/axiosInstance';
 import Header from '@/app/components/header';
 import { useRouter } from 'next/navigation';
 import { decrypt } from '@/app/action/enc';
