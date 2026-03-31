@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3,ShieldCheck } from 'lucide-react';
 import BillingAddressModal from './BillingAddressModal';
-import axios from 'axios';
+import axios from '@/app/lib/axiosInstance';
 import { decrypt } from '@/app/action/enc';
 
 interface BillingAddress {

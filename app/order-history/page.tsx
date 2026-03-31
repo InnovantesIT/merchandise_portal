@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import axios from "@/app/lib/axiosInstance";
 import Head from "next/head";
 import { useRouter } from 'next/navigation';
 import Header from '@/app/components/header';
@@ -256,13 +256,8 @@ const [contactPhone, setContactPhone] = useState<string>('');
         setOrders(response.data);
         setFilteredOrders(response.data);
       } catch (error: any) {
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.clear();
-          router.push('/');
-        } else {
           console.error("Error fetching sales order details:", error);
           setError("Failed to fetch sales order details");
-        }
       } finally {
         setLoading(false);
       }
@@ -302,13 +297,8 @@ const [contactPhone, setContactPhone] = useState<string>('');
         setError("Failed to fetch sales order details");
       }
     } catch (error: any) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        localStorage.clear();
-        router.push('/');
-      } else {
         console.error("Error fetching sales order details:", error);
         setError("Failed to fetch sales order details");
-      }
     }
   };
   
