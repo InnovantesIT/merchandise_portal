@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import axios from '@/app/lib/axiosInstance';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
 import { Smartphone, Calendar, Hash } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
