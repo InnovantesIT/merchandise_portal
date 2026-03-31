@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Edit3,ShieldCheck } from 'lucide-react';
 import BillingAddressModal from './BillingAddressModal';
-import axios from '@/app/lib/axiosInstance';
+import axios, { isAuthError } from '@/app/lib/axiosInstance';
 import { decrypt } from '@/app/action/enc';
 
 interface BillingAddress {
@@ -97,7 +97,8 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
         setOriginalBillingAddress(initialBillingDetails);
         validateAndCallback(initialBillingDetails);
 
-      } catch (error) {
+      } catch (error: any) {
+        if (isAuthError(error)) return;
         console.error('Error fetching user details:', error);
       } finally {
         setIsInitialLoad(false);
@@ -151,7 +152,8 @@ const BillingDetails: React.FC<BillingDetailsProps> = ({ onBillingDetailsChange,
           setUpdateSuccess(false);
         }, 3000);
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error('Error updating user details:', error);
       setUpdateError('Failed to update details. Please try again.');
       if (originalBillingAddress) {

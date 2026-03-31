@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useContext } from "react";
-import axios from "@/app/lib/axiosInstance";
+import axios, { isAuthError } from "@/app/lib/axiosInstance";
 import ProductCard from "@/app/components/productcard";
 import Head from "next/head";
 import { ToastContainer, ToastPosition, toast } from "react-toastify";
@@ -152,6 +152,7 @@ const Products = () => {
         throw new Error("Unexpected response format");
       }
     } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error("Error fetching products:", error);
       showToast("Failed to load products. Please try again later.", "error");
     } finally {
@@ -182,6 +183,7 @@ const Products = () => {
           throw new Error("Unexpected response format for product categories");
         }
       } catch (error: any) {
+        if (isAuthError(error)) return;
         console.error("Error fetching product groups:", error);
         showToast("Failed to load product categories. Please try again later.", "error");
       }
@@ -232,6 +234,7 @@ const Products = () => {
 
       showToast(`${product.item_name} added to cart (${quantityToAdd} units).`, "success");
     } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error(
         "Error adding to cart:",
         error.response ? error.response.data : error.message

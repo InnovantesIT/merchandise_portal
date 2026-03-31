@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from "react";
-import axios from "@/app/lib/axiosInstance";
+import axios, { isAuthError } from "@/app/lib/axiosInstance";
 import Head from "next/head";
 import { useRouter } from 'next/navigation';
 import Header from '@/app/components/header';
@@ -256,6 +256,7 @@ const [contactPhone, setContactPhone] = useState<string>('');
         setOrders(response.data);
         setFilteredOrders(response.data);
       } catch (error: any) {
+          if (isAuthError(error)) return;
           console.error("Error fetching sales order details:", error);
           setError("Failed to fetch sales order details");
       } finally {
@@ -297,6 +298,7 @@ const [contactPhone, setContactPhone] = useState<string>('');
         setError("Failed to fetch sales order details");
       }
     } catch (error: any) {
+        if (isAuthError(error)) return;
         console.error("Error fetching sales order details:", error);
         setError("Failed to fetch sales order details");
     }

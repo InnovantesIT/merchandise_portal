@@ -4,7 +4,7 @@ Topline Portal
 
  **Version**
  
- v-1.0.0
+ v-1.0.1
 
 **Release Date**
 
@@ -39,16 +39,15 @@ Varun Sharma (16053)
 **Impacted Files**
 
 
-1. .gitignore
-2. app/cart/page.tsx
-3. app/components/BillingDetails.tsx
-4. app/dealer-orders/page.tsx
-5. app/lib/axiosInstance.ts
-6. app/order-history/page.tsx
-7. app/page.tsx
-8. app/products/page.tsx
-9. app/profile/page.tsx
-10. package-lock.json
+1. app/cart/page.tsx
+2. app/components/BillingDetails.tsx
+3. app/dealer-orders/page.tsx
+4. app/lib/axiosInstance.ts
+5. app/order-history/page.tsx
+6. app/page.tsx
+7. app/products/page.tsx
+8. app/profile/page.tsx
+
 
 
 
@@ -70,5 +69,5 @@ Varun Sharma (16053)
     
  **Base Version**
  
-  1f216d5
+  0ac7e26
 

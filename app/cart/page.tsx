@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import axios from '@/app/lib/axiosInstance';
+import axios, { isAuthError } from '@/app/lib/axiosInstance';
 import { X, Plus, Minus, Edit3, CreditCard } from 'lucide-react';
 import { Smartphone, Calendar, Hash } from 'lucide-react';
 import { BsHandbag } from 'react-icons/bs';
@@ -429,16 +429,8 @@ const CartPage: React.FC = () => {
         setAddresses(shippingAddress);
 
       } catch (error: any) {
+        if (isAuthError(error)) return;
         console.error('Error fetching data:', error);
-        if (error.response?.status === 401 || error.response?.status === 403) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('role');
-          localStorage.removeItem('customer_id');
-          localStorage.removeItem('first_name');
-          localStorage.removeItem('username');
-
-          router.push('/');
-        }
       }
     };
 
@@ -534,7 +526,8 @@ const CartPage: React.FC = () => {
           console.error('Failed to update quantity:', response);
           setErrorMessage('Failed to update item quantity.');
         }
-      } catch (error) {
+      } catch (error: any) {
+        if (isAuthError(error)) return;
         console.error('Error updating quantity:', error);
         setErrorMessage('Failed to update item quantity.');
       }
@@ -610,7 +603,8 @@ const CartPage: React.FC = () => {
         console.error('Failed to update quantity:', response);
         setErrorMessage('Failed to update item quantity.');
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error('Error updating quantity:', error);
       setErrorMessage('Failed to update item quantity.');
     }
@@ -699,15 +693,7 @@ const CartPage: React.FC = () => {
         }
       }
     } catch (error: any) {
-      if (error.response?.status === 401 || error.response?.status === 403) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('role');
-        localStorage.removeItem('customer_id');
-        localStorage.removeItem('first_name');
-        localStorage.removeItem('username');
-
-        router.push('/');
-      }
+      if (isAuthError(error)) return;
       console.error('Error removing from cart:', error);
       setErrorMessage('Failed to remove item from cart.');
     }
@@ -871,7 +857,8 @@ const CartPage: React.FC = () => {
       } else {
         setErrorMessage('Failed to place order. Please try again.');
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error('Error creating sales order:', error);
       setErrorMessage('Failed to create sales order. Please try again.');
     }

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import axios from '@/app/lib/axiosInstance';
+import axios, { isAuthError } from '@/app/lib/axiosInstance';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ForgetPasswordModal from '@/app/components/forgetpassword';
@@ -116,6 +116,7 @@ export default function Login() {
           }
         }
       } catch (error:any) {
+        if (isAuthError(error)) return;
         const errorMessage = error.response?.data?.message || 'Validation failed';
         setErrors({
           username: step === 'email' ? errorMessage : '',
