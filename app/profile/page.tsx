@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect } from 'react';
-import axios from '@/app/lib/axiosInstance';
+import axios, { isAuthError } from '@/app/lib/axiosInstance';
 import Header from '@/app/components/header';
 import { useRouter } from 'next/navigation';
 import { decrypt } from '@/app/action/enc';
@@ -79,7 +79,8 @@ function ProfilePage() {
       setMobile(data.phone);
       setGST(data.gst_no);
       setBillingAddress(data.billing_address || {});
-    } catch (err) {
+    } catch (err: any) {
+      if (isAuthError(err)) return;
       console.error('Failed to fetch user details:', err);
     } finally {
       setLoading(false);
@@ -119,7 +120,8 @@ function ProfilePage() {
       // Refresh user details after update
       fetchUserDetails();
       setIsModalOpen(false);
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) return;
       console.error('Error updating user details:', error);
       setUpdateError('Failed to update profile. Please try again.');
     }

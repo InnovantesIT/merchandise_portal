@@ -1,6 +1,6 @@
 "use client"
 import React, { useEffect, useState } from 'react';
-import axios from '@/app/lib/axiosInstance';
+import axios, { isAuthError } from '@/app/lib/axiosInstance';
 import Header from "@/app/components/header";
 import { useRouter } from 'next/navigation';  // Corrected from next/navigation to next/router
 import { decrypt } from '@/app/action/enc';
@@ -140,7 +140,8 @@ const OrderTable = () => {
         
         setDealerNames(uniqueDealerNames); // TypeScript now knows uniqueDealerNames is string[]
         
-      } catch (error) {
+      } catch (error: any) {
+        if (isAuthError(error)) return;
         setError("Failed to fetch order status");
       } finally {
         setLoading(false);
@@ -212,7 +213,8 @@ const OrderTable = () => {
       } else {
         setError("Failed to fetch sales order details");
       }
-    } catch (error) {
+    } catch (error: any) {
+      if (isAuthError(error)) return;
       setError("Failed to fetch sales order details");
     }
   };
